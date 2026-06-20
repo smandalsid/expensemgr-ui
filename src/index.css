@@ -1,0 +1,1102 @@
+@import "tailwindcss";
+
+/* ─── Reset & Base ─────────────────────────────────────────────── */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100vh;
+  font-family: "Outfit", system-ui, sans-serif;
+  background: #07071a;
+  color: #e8e5f0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+#root {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+}
+
+/* ─── Keyframe Animations ──────────────────────────────────────── */
+
+@keyframes float-card {
+  0%   { transform: translateY(0) translateX(0); opacity: 0; }
+  6%   { opacity: 0.88; }
+  88%  { opacity: 0.88; }
+  100% { transform: translateY(-108vh) translateX(14px); opacity: 0; }
+}
+
+@keyframes orb-drift {
+  0%, 100% { transform: scale(1) translate(0, 0); }
+  33%       { transform: scale(1.08) translate(3%, -4%); }
+  66%       { transform: scale(0.95) translate(-2%, 3%); }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.35; transform: scale(0.8); }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes slide-toggle {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer-pass {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+/* ─── Hero Panel ──────────────────────────────────────────────── */
+
+.hero-panel {
+  position: relative;
+  overflow: hidden;
+  background: #07071a;
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 2.6rem 3rem;
+  flex: 0 0 58%;
+}
+
+@media (min-width: 1024px) {
+  .hero-panel { display: flex; }
+}
+
+/* Ambient orbs */
+.hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(64px);
+  pointer-events: none;
+}
+
+.hero-orb-1 {
+  width: 520px; height: 520px;
+  background: radial-gradient(circle, rgba(201,169,110,0.20) 0%, transparent 70%);
+  top: -160px; left: -130px;
+  animation: orb-drift 9s ease-in-out infinite;
+}
+
+.hero-orb-2 {
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(96,165,250,0.14) 0%, transparent 70%);
+  bottom: 60px; right: -90px;
+  animation: orb-drift 12s ease-in-out infinite 3s;
+}
+
+.hero-orb-3 {
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(74,222,128,0.09) 0%, transparent 70%);
+  top: 42%; left: 32%;
+  animation: orb-drift 16s ease-in-out infinite 6s;
+}
+
+/* Dot grid background texture */
+.dot-grid {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.028) 1px, transparent 1px);
+  background-size: 30px 30px;
+  pointer-events: none;
+}
+
+/* Floating cards layer */
+.float-stage {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.float-card {
+  position: absolute;
+  bottom: -90px;
+}
+
+.float-card-inner {
+  background: rgba(12, 12, 28, 0.86);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(201, 169, 110, 0.13);
+  border-radius: 13px;
+  padding: 10px 14px;
+  min-width: 162px;
+  max-width: 196px;
+}
+
+/* Hero content layout */
+.hero-content {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}
+
+/* Logo */
+.logo-mark {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-icon {
+  width: 34px; height: 34px;
+  background: linear-gradient(135deg, #c9a96e 0%, #8a6534 100%);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px;
+  font-family: "IBM Plex Mono", monospace;
+  color: #07071a;
+  font-weight: 600;
+}
+
+.logo-name {
+  font-family: "Outfit", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #e8e5f0;
+  text-transform: uppercase;
+}
+
+.live-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10.5px;
+  color: #4a4a6a;
+  letter-spacing: 0.06em;
+}
+
+.live-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #4ade80;
+  animation: live-pulse 2s ease-in-out infinite;
+}
+
+/* Headlines */
+.hero-headline {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: clamp(2.8rem, 3.8vw, 4.2rem);
+  font-weight: 300;
+  line-height: 1.06;
+  letter-spacing: -0.025em;
+  color: #e8e5f0;
+  margin: 0 0 14px 0;
+}
+
+.hero-headline em {
+  font-style: italic;
+  color: #c9a96e;
+}
+
+.hero-sub {
+  font-family: "Outfit", sans-serif;
+  font-size: 14.5px;
+  color: #555578;
+  line-height: 1.78;
+  max-width: 370px;
+  margin: 0;
+}
+
+/* Stat cards */
+.stats-row {
+  display: flex;
+  gap: 10px;
+}
+
+.stat-card {
+  flex: 1;
+  background: rgba(255,255,255,0.024);
+  border: 1px solid rgba(255,255,255,0.052);
+  border-radius: 14px;
+  padding: 18px 15px;
+  opacity: 0;
+}
+
+.stat-card.visible {
+  animation: fade-up 0.65s ease forwards;
+}
+
+.stat-value {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 1.4rem;
+  font-weight: 500;
+  line-height: 1;
+  margin-bottom: 7px;
+}
+
+.stat-label {
+  font-family: "Outfit", sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #3e3e62;
+  margin-bottom: 3px;
+}
+
+.stat-detail {
+  font-family: "Outfit", sans-serif;
+  font-size: 11.5px;
+  color: #525275;
+}
+
+/* ─── Auth Panel ──────────────────────────────────────────────── */
+
+.auth-panel {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1.5rem;
+  background: #09091d;
+  position: relative;
+  min-height: 100vh;
+}
+
+.auth-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 80% 55% at 50% 0%, rgba(201,169,110,0.055) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 376px;
+  position: relative;
+  z-index: 1;
+  animation: fade-up 0.55s ease both;
+}
+
+/* Auth logo (mobile) */
+.auth-logo {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 2.4rem;
+}
+
+@media (min-width: 1024px) {
+  .auth-logo { display: none; }
+}
+
+.auth-logo-icon {
+  width: 30px; height: 30px;
+  background: linear-gradient(135deg, #c9a96e 0%, #8a6534 100%);
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+  font-family: "IBM Plex Mono", monospace;
+  color: #07071a;
+  font-weight: 600;
+}
+
+.auth-logo-name {
+  font-family: "Outfit", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #e8e5f0;
+  text-transform: uppercase;
+}
+
+/* Auth headings */
+.auth-heading {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 2.3rem;
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  color: #e8e5f0;
+  margin: 0 0 5px 0;
+}
+
+.auth-subheading {
+  font-family: "Outfit", sans-serif;
+  font-size: 13.5px;
+  color: #4e4e78;
+  margin: 0 0 1.9rem 0;
+}
+
+/* Mode toggle */
+.mode-toggle {
+  display: flex;
+  background: rgba(255,255,255,0.038);
+  border: 1px solid rgba(255,255,255,0.068);
+  border-radius: 10px;
+  padding: 3px;
+  margin-bottom: 1.9rem;
+  gap: 3px;
+}
+
+.mode-btn {
+  flex: 1;
+  padding: 9px 0;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  font-family: "Outfit", sans-serif;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.22s ease;
+  background: transparent;
+  color: #4e4e78;
+}
+
+.mode-btn.active {
+  background: rgba(201, 169, 110, 0.12);
+  border-color: rgba(201, 169, 110, 0.22);
+  color: #c9a96e;
+}
+
+/* Form */
+.auth-form {
+  animation: slide-toggle 0.22s ease both;
+}
+
+.field-group {
+  margin-bottom: 1.05rem;
+}
+
+.field-label {
+  display: block;
+  font-family: "Outfit", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #4a4a72;
+  margin-bottom: 7px;
+}
+
+.field-input-wrap {
+  position: relative;
+}
+
+.auth-input {
+  width: 100%;
+  background: rgba(255,255,255,0.038);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-family: "Outfit", sans-serif;
+  font-size: 14.5px;
+  color: #e8e5f0;
+  outline: none;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+}
+
+.auth-input::placeholder {
+  color: #2e2e50;
+}
+
+.auth-input:focus {
+  border-color: rgba(201, 169, 110, 0.42);
+  background: rgba(201, 169, 110, 0.035);
+  box-shadow: 0 0 0 3px rgba(201, 169, 110, 0.08);
+}
+
+.auth-input.has-toggle {
+  padding-right: 44px;
+}
+
+.auth-input.error {
+  border-color: rgba(248, 113, 113, 0.48);
+}
+
+.auth-input.error:focus {
+  box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.09);
+}
+
+.field-error {
+  font-family: "Outfit", sans-serif;
+  font-size: 11.5px;
+  color: #f87171;
+  margin-top: 6px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: #3a3a5e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+}
+
+.password-toggle:hover {
+  color: #c9a96e;
+}
+
+/* Submit button */
+.auth-submit {
+  width: 100%;
+  margin-top: 1.45rem;
+  padding: 13px 0;
+  border: none;
+  border-radius: 10px;
+  font-family: "Outfit", sans-serif;
+  font-size: 14.5px;
+  font-weight: 700;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #c9a96e 0%, #a07840 100%);
+  color: #07071a;
+  letter-spacing: 0.03em;
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.auth-submit::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255,255,255,0.22) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  background-position: -200% center;
+}
+
+.auth-submit:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 28px rgba(201, 169, 110, 0.28);
+}
+
+.auth-submit:not(:disabled):hover::after {
+  background-position: 200% center;
+  transition: background-position 0.55s ease;
+}
+
+.auth-submit:not(:disabled):active {
+  transform: translateY(0);
+}
+
+.auth-submit:disabled {
+  opacity: 0.72;
+  cursor: not-allowed;
+}
+
+/* Divider */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 1.3rem 0;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255,255,255,0.055);
+}
+
+.auth-divider span {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  color: #2e2e50;
+  letter-spacing: 0.05em;
+}
+
+/* Footer */
+.auth-footer {
+  text-align: center;
+  font-family: "Outfit", sans-serif;
+  font-size: 13px;
+  color: #3e3e62;
+}
+
+.auth-switch-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #c9a96e;
+  font-family: "Outfit", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  margin-left: 5px;
+  padding: 0;
+  text-decoration: underline;
+  text-decoration-color: rgba(201, 169, 110, 0.38);
+  text-underline-offset: 3px;
+  transition: color 0.2s ease;
+}
+
+.auth-switch-btn:hover {
+  color: #e8c98a;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: #07071a; }
+::-webkit-scrollbar-thumb { background: #22223a; border-radius: 3px; }
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  border-color: #646cff;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+  }
+}
+
+/* ─── Home / Expense Page ─────────────────────────────────────────── */
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.home-page {
+  min-height: 100vh;
+  width: 100%;
+  background: #07071a;
+  display: flex;
+  flex-direction: column;
+}
+
+.home-nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 62px;
+  background: rgba(9, 9, 29, 0.94);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255,255,255,0.055);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+  z-index: 100;
+}
+
+.home-content {
+  flex: 1;
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 92px 1.5rem 4rem;
+  animation: fade-in 0.35s ease;
+}
+
+.home-section-title {
+  font-family: "Outfit", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #3e3e62;
+  margin: 0 0 14px 0;
+}
+
+/* ── Summary cards ─────────────────────────────────────────────── */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 2.8rem;
+}
+
+@media (max-width: 600px) {
+  .summary-grid { grid-template-columns: 1fr 1fr; }
+}
+
+.summary-card {
+  background: rgba(255,255,255,0.024);
+  border: 1px solid rgba(255,255,255,0.055);
+  border-radius: 16px;
+  padding: 20px 18px;
+  animation: slide-up 0.5s ease both;
+}
+
+.summary-label {
+  font-family: "Outfit", sans-serif;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #3e3e62;
+  margin: 0 0 10px 0;
+}
+
+.summary-amount {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 1.55rem;
+  font-weight: 500;
+  line-height: 1;
+  margin: 0;
+}
+
+/* ── Expense cards ─────────────────────────────────────────────── */
+.expense-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.expense-card {
+  background: rgba(255,255,255,0.022);
+  border: 1px solid rgba(255,255,255,0.055);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  animation: slide-up 0.5s ease both;
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+
+.expense-card:hover {
+  background: rgba(255,255,255,0.036);
+  border-color: rgba(255,255,255,0.09);
+}
+
+.expense-card-accent {
+  width: 4px;
+  flex-shrink: 0;
+}
+.expense-card-accent.green { background: linear-gradient(180deg, #4ade80, #22c55e); }
+.expense-card-accent.red   { background: linear-gradient(180deg, #f87171, #ef4444); }
+
+.expense-card-body {
+  flex: 1;
+  padding: 20px 22px;
+}
+
+.expense-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.expense-desc {
+  font-family: "Outfit", sans-serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #e8e5f0;
+  margin: 0;
+}
+
+.expense-total {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #e8e5f0;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.expense-meta-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.expense-badge {
+  font-family: "Outfit", sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 20px;
+  letter-spacing: 0.04em;
+}
+.expense-badge.payer {
+  background: rgba(201,169,110,0.12);
+  color: #c9a96e;
+  border: 1px solid rgba(201,169,110,0.22);
+}
+.expense-badge.currency {
+  background: rgba(255,255,255,0.04);
+  color: #525275;
+  border: 1px solid rgba(255,255,255,0.07);
+}
+
+.expense-you-owe {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+}
+.expense-you-owe.green {
+  color: #4ade80;
+  background: rgba(74,222,128,0.07);
+  border: 1px solid rgba(74,222,128,0.14);
+}
+.expense-you-owe.red {
+  color: #f87171;
+  background: rgba(248,113,113,0.07);
+  border: 1px solid rgba(248,113,113,0.14);
+}
+
+.expense-divider {
+  border: none;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  margin: 0 0 14px 0;
+}
+
+.expense-participants-label {
+  font-family: "Outfit", sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #3a3a5e;
+  margin: 0 0 10px 0;
+}
+
+.participant-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.participant-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Outfit", sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.participant-name {
+  font-family: "Outfit", sans-serif;
+  font-size: 13px;
+  color: #7070a8;
+  flex: 1;
+}
+
+.participant-share {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12.5px;
+  color: #e8e5f0;
+  font-weight: 500;
+}
+
+.participant-status {
+  font-family: "Outfit", sans-serif;
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.participant-status.settled {
+  color: #4ade80;
+  background: rgba(74,222,128,0.08);
+}
+.participant-status.pending {
+  color: #f59e0b;
+  background: rgba(245,158,11,0.08);
+}
+
+/* ── Empty / error / loading states ───────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: 5rem 2rem;
+}
+.empty-state-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.skeleton-card {
+  border-radius: 16px;
+  height: 150px;
+  margin-bottom: 10px;
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.022) 25%,
+    rgba(255,255,255,0.048) 50%,
+    rgba(255,255,255,0.022) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer-pass 1.5s ease infinite;
+}
+
+/* ─── Change Password Modal ───────────────────────────────────────── */
+
+@keyframes cp-backdrop-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes cp-modal-in {
+  from { opacity: 0; transform: translateY(22px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes cp-success-in {
+  from { opacity: 0; transform: scale(0.82); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.cp-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 4, 18, 0.78);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 1.5rem;
+  animation: cp-backdrop-in 0.2s ease both;
+}
+
+.cp-modal {
+  width: 100%;
+  max-width: 400px;
+  background: #0c0c22;
+  border: 1px solid rgba(201, 169, 110, 0.14);
+  border-radius: 18px;
+  overflow: hidden;
+  position: relative;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.04),
+    0 24px 64px rgba(0, 0, 0, 0.6),
+    0 4px 16px rgba(0, 0, 0, 0.4);
+  animation: cp-modal-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.cp-accent-bar {
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, #c9a96e 40%, #e8c98a 60%, transparent 100%);
+  opacity: 0.75;
+}
+
+.cp-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 1.4rem 1.5rem 0.2rem;
+}
+
+.cp-header-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.cp-lock-icon {
+  width: 36px;
+  height: 36px;
+  background: rgba(201, 169, 110, 0.1);
+  border: 1px solid rgba(201, 169, 110, 0.18);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #c9a96e;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.cp-title {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 1.55rem;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: #e8e5f0;
+  margin: 0 0 4px 0;
+  line-height: 1.1;
+}
+
+.cp-subtitle {
+  font-family: "Outfit", sans-serif;
+  font-size: 12.5px;
+  color: #4a4a72;
+  margin: 0;
+}
+
+.cp-close-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #4a4a72;
+  border-radius: 8px;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  transition: color 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.cp-close-btn:hover {
+  color: #e8e5f0;
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.cp-form {
+  padding: 1.2rem 1.5rem 1.6rem;
+}
+
+.cp-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.05);
+  margin: 0.6rem 0 1.05rem;
+}
+
+.cp-api-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: rgba(248, 113, 113, 0.07);
+  border: 1px solid rgba(248, 113, 113, 0.2);
+  border-radius: 9px;
+  padding: 10px 12px;
+  font-family: "Outfit", sans-serif;
+  font-size: 13px;
+  color: #f87171;
+  margin-top: 0.6rem;
+  line-height: 1.45;
+}
+
+/* ── Success state ── */
+
+.cp-success {
+  padding: 2.2rem 1.5rem 1.8rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  animation: cp-success-in 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.cp-success-icon {
+  width: 60px;
+  height: 60px;
+  background: rgba(74, 222, 128, 0.1);
+  border: 1px solid rgba(74, 222, 128, 0.22);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4ade80;
+  margin-bottom: 1.2rem;
+}
+
+.cp-success-title {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 1.7rem;
+  font-weight: 400;
+  color: #e8e5f0;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.02em;
+}
+
+.cp-success-msg {
+  font-family: "Outfit", sans-serif;
+  font-size: 13.5px;
+  color: #4e4e78;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* ── Nav change-password button ── */
+
+.cp-nav-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  color: #4a4a72;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  flex-shrink: 0;
+}
+
+.cp-nav-btn:hover {
+  color: #c9a96e;
+  border-color: rgba(201, 169, 110, 0.28);
+  background: rgba(201, 169, 110, 0.06);
+}

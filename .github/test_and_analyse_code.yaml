@@ -1,0 +1,11 @@
+name: test-and-analyse-code
+
+on:
+	pull_request:
+		branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+		steps:
+			- Installing Dependencies
