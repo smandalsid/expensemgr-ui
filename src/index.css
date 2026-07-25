@@ -1100,3 +1100,367 @@ button:focus-visible {
   border-color: rgba(201, 169, 110, 0.28);
   background: rgba(201, 169, 110, 0.06);
 }
+
+/* ─── Create Expense Modal (ce-) ─────────────────────────────────── */
+
+.ce-modal {
+  width: 100%;
+  max-width: 500px;
+  background: #0c0c22;
+  border: 1px solid rgba(201, 169, 110, 0.14);
+  border-radius: 18px;
+  overflow: hidden;
+  position: relative;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.04),
+    0 24px 64px rgba(0, 0, 0, 0.6),
+    0 4px 16px rgba(0, 0, 0, 0.4);
+  animation: cp-modal-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.ce-form {
+  padding: 1.2rem 1.5rem 1.6rem;
+  max-height: calc(100svh - 180px);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.ce-form::-webkit-scrollbar { width: 4px; }
+.ce-form::-webkit-scrollbar-track { background: transparent; }
+.ce-form::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+
+.ce-row {
+  display: flex;
+  gap: 12px;
+}
+
+.ce-select {
+  width: 100%;
+  background: rgba(255,255,255,0.038);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-family: "Outfit", sans-serif;
+  font-size: 14.5px;
+  color: #e8e5f0;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%234a4a72' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 38px;
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ce-select option {
+  background: #0c0c22;
+  color: #e8e5f0;
+}
+
+.ce-select:focus {
+  border-color: rgba(201, 169, 110, 0.42);
+  background-color: rgba(201, 169, 110, 0.035);
+  box-shadow: 0 0 0 3px rgba(201, 169, 110, 0.08);
+}
+
+.ce-participants-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.ce-col-hint {
+  font-family: "Outfit", sans-serif;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #3e3e62;
+}
+
+.ce-participants-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.ce-participant-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.ce-remove-btn {
+  width: 38px;
+  height: 38px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 9px;
+  color: #3a3a5e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin-top: 1px;
+  transition: color 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.ce-remove-btn:not(:disabled):hover {
+  color: #f87171;
+  border-color: rgba(248, 113, 113, 0.28);
+  background: rgba(248, 113, 113, 0.06);
+}
+
+.ce-remove-btn:disabled {
+  opacity: 0.28;
+  cursor: not-allowed;
+}
+
+.ce-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(201, 169, 110, 0.06);
+  border: 1px solid rgba(201, 169, 110, 0.18);
+  border-radius: 9px;
+  color: #c9a96e;
+  font-family: "Outfit", sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 7px 13px;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.ce-add-btn:hover {
+  background: rgba(201, 169, 110, 0.12);
+  border-color: rgba(201, 169, 110, 0.34);
+  color: #e8c98a;
+}
+
+.ce-error-banner {
+  background: rgba(248, 113, 113, 0.07);
+  border: 1px solid rgba(248, 113, 113, 0.2);
+  border-radius: 9px;
+  padding: 10px 14px;
+  font-family: "Outfit", sans-serif;
+  font-size: 13px;
+  color: #f87171;
+  margin-bottom: 1rem;
+  line-height: 1.45;
+}
+
+/* ── New Expense button beside greeting ── */
+
+.new-expense-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(201, 169, 110, 0.08);
+  border: 1px solid rgba(201, 169, 110, 0.24);
+  border-radius: 10px;
+  color: #c9a96e;
+  font-family: "Outfit", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 9px 16px;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.new-expense-btn:hover {
+  background: rgba(201, 169, 110, 0.15);
+  border-color: rgba(201, 169, 110, 0.42);
+  color: #e8c98a;
+  box-shadow: 0 4px 16px rgba(201, 169, 110, 0.12);
+}
+
+/* ─── Searchable Currency Picker ──────────────────────────────────── */
+
+.ce-currency-wrap {
+  width: 100%;
+}
+
+.ce-currency-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.038);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-family: "Outfit", sans-serif;
+  color: #e8e5f0;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ce-currency-trigger:focus,
+.ce-currency-trigger.open {
+  border-color: rgba(201, 169, 110, 0.42);
+  background: rgba(201, 169, 110, 0.035);
+  box-shadow: 0 0 0 3px rgba(201, 169, 110, 0.08);
+  outline: none;
+}
+
+.ce-currency-code-badge {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: #c9a96e;
+  background: rgba(201,169,110,0.12);
+  border: 1px solid rgba(201,169,110,0.2);
+  border-radius: 6px;
+  padding: 2px 7px;
+  flex-shrink: 0;
+  min-width: 36px;
+  text-align: center;
+}
+
+.ce-currency-trigger-label {
+  flex: 1;
+  font-size: 13px;
+  color: #9090b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.ce-chevron {
+  flex-shrink: 0;
+  color: #4a4a72;
+  transition: transform 0.2s ease;
+}
+
+.ce-chevron.open {
+  transform: rotate(180deg);
+}
+
+.ce-currency-panel {
+  margin-top: 4px;
+  border: 1px solid rgba(201, 169, 110, 0.2);
+  border-radius: 12px;
+  background: #0e0e26;
+  overflow: hidden;
+}
+
+.ce-currency-search-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.055);
+  color: #4a4a72;
+}
+
+.ce-currency-search {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  font-family: "Outfit", sans-serif;
+  font-size: 13.5px;
+  color: #e8e5f0;
+}
+
+.ce-currency-search::placeholder {
+  color: #3a3a5e;
+}
+
+.ce-currency-search-clear {
+  background: none;
+  border: none;
+  color: #4a4a72;
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  border-radius: 4px;
+  transition: color 0.15s ease;
+}
+
+.ce-currency-search-clear:hover {
+  color: #9090b8;
+}
+
+.ce-currency-list {
+  max-height: 190px;
+  overflow-y: auto;
+}
+
+.ce-currency-list::-webkit-scrollbar { width: 4px; }
+.ce-currency-list::-webkit-scrollbar-track { background: transparent; }
+.ce-currency-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+
+.ce-currency-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.13s ease;
+}
+
+.ce-currency-option:hover {
+  background: rgba(255,255,255,0.042);
+}
+
+.ce-currency-option.active {
+  background: rgba(201,169,110,0.08);
+}
+
+.ce-currency-option-code {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #c9a96e;
+  background: rgba(201,169,110,0.1);
+  border: 1px solid rgba(201,169,110,0.18);
+  border-radius: 5px;
+  padding: 2px 6px;
+  flex-shrink: 0;
+  min-width: 36px;
+  text-align: center;
+}
+
+.ce-currency-option-name {
+  flex: 1;
+  font-family: "Outfit", sans-serif;
+  font-size: 13px;
+  color: #7070a0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.ce-currency-option.active .ce-currency-option-name {
+  color: #c9a96e;
+}
+
+.ce-currency-empty {
+  padding: 16px 14px;
+  font-family: "Outfit", sans-serif;
+  font-size: 13px;
+  color: #4a4a72;
+  text-align: center;
+}

@@ -17,3 +17,17 @@ export interface Expense {
   expense_share: ExpenseShare[]
   total_amount: number
 }
+
+export interface SecondaryShare {
+  user_key: number
+  user_share: number
+}
+
+export interface CreateExpenseRequest {
+  primary_user_key: number
+  currency_key: number
+  division_by_key: number
+  total_amount: number
+  expense_desc: string
+  user_expense_secondary_share: SecondaryShare[]
+}

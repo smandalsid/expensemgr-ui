@@ -1,8 +1,11 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { getActiveExpenses } from '../services/expenseService'
+import { getCurrencies } from '../services/currencyService'
 import type { Expense, ExpenseShare } from '../types/expense'
+import type { Currency } from '../types/currency'
 import ChangePasswordModal from '../components/ChangePasswordModal'
+import CreateExpenseModal from '../components/CreateExpenseModal'
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
@@ -190,16 +193,26 @@ export default function HomePage() {
   const greetingText = useMemo(greeting, [])
 
   const [expenses, setExpenses] = useState<Expense[]>([])
+  const [currencies, setCurrencies] = useState<Currency[]>([])
   const [expensesLoading, setExpensesLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showChangePassword, setShowChangePassword] = useState(false)
+  const [showCreateExpense, setShowCreateExpense] = useState(false)
 
-  useEffect(() => {
+  const fetchExpenses = useCallback(() => {
+    setExpensesLoading(true)
+    setError(null)
     getActiveExpenses()
       .then(data => setExpenses(data ?? []))
       .catch(() => setError('Could not load expenses. Please refresh.'))
       .finally(() => setExpensesLoading(false))
   }, [])
+
+  // Fetch expenses and currencies in parallel once on mount
+  useEffect(() => {
+    fetchExpenses()
+    getCurrencies().then(data => setCurrencies(data ?? [])).catch(() => {})
+  }, [fetchExpenses])
 
   // Show skeletons only until expenses are ready; user profile enriches the UI when it arrives
   const loading = expensesLoading || (userLoading && myKey === null)
@@ -326,21 +339,35 @@ export default function HomePage() {
       <div className="home-content">
 
         {/* Greeting */}
-        <div style={{ marginBottom: '2.2rem' }}>
-          <h1 style={{
-            fontFamily: '"Cormorant Garamond", Georgia, serif',
-            fontSize: 'clamp(1.8rem, 3vw, 2.5rem)',
-            fontWeight: 300, letterSpacing: '-0.02em',
-            color: '#e8e5f0', margin: '0 0 6px 0', lineHeight: 1.1,
-          }}>
-            {greetingText}, <em style={{ fontStyle: 'italic', color: '#c9a96e' }}>{displayName}.</em>
-          </h1>
-          <p style={{
-            fontFamily: '"Outfit", sans-serif',
-            fontSize: '14px', color: '#3e3e62', margin: 0,
-          }}>
-            Here's your current expense overview.
-          </p>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', marginBottom: '2.2rem' }}>
+          <div>
+            <h1 style={{
+              fontFamily: '"Cormorant Garamond", Georgia, serif',
+              fontSize: 'clamp(1.8rem, 3vw, 2.5rem)',
+              fontWeight: 300, letterSpacing: '-0.02em',
+              color: '#e8e5f0', margin: '0 0 6px 0', lineHeight: 1.1,
+            }}>
+              {greetingText}, <em style={{ fontStyle: 'italic', color: '#c9a96e' }}>{displayName}.</em>
+            </h1>
+            <p style={{
+              fontFamily: '"Outfit", sans-serif',
+              fontSize: '14px', color: '#3e3e62', margin: 0,
+            }}>
+              Here's your current expense overview.
+            </p>
+          </div>
+          <button
+            className="new-expense-btn"
+            onClick={() => setShowCreateExpense(true)}
+            aria-label="Create new expense"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            New Expense
+          </button>
         </div>
 
         {/* ── Summary cards — always shown once loaded ── */}
@@ -428,6 +455,18 @@ export default function HomePage() {
         <ChangePasswordModal
           onClose={() => setShowChangePassword(false)}
           onSuccess={clearToken}
+        />
+      )}
+
+      {showCreateExpense && myKey !== null && (
+        <CreateExpenseModal
+          userKey={myKey}
+          currencies={currencies}
+          onClose={() => setShowCreateExpense(false)}
+          onSuccess={() => {
+            setShowCreateExpense(false)
+            fetchExpenses()
+          }}
         />
       )}
     </div>
