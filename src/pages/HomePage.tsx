@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { getActiveExpenses } from '../services/expenseService'
+import { getActiveExpenses, settleExpense, deleteExpense } from '../services/expenseService'
 import { getCurrencies } from '../services/currencyService'
 import type { Expense, ExpenseShare } from '../types/expense'
 import type { Currency } from '../types/currency'
@@ -60,13 +60,17 @@ function getMyFinancials(expense: Expense, userKey: number) {
 
 // ─── Sub-components ────────────────────────────────────────────────────────
 
-function ParticipantRow({ share, currency, userKey }: {
+function ParticipantRow({ share, currency, userKey, isPayer, onSettle, isSettling }: {
   share: ExpenseShare
   currency: string
   userKey: number
+  isPayer: boolean
+  onSettle?: () => void
+  isSettling?: boolean
 }) {
   const isMe = share.secondary_user_key === userKey
   const av = avatarStyle(share.secondary_user_key)
+  const showSettleBtn = !share.expense_ver_status && (isMe || isPayer)
   return (
     <div className="participant-row">
       <div
@@ -81,18 +85,57 @@ function ParticipantRow({ share, currency, userKey }: {
       <span className="participant-share">
         {formatAmount(share.expense_share, currency)}
       </span>
-      <span className={`participant-status ${share.expense_ver_status ? 'settled' : 'pending'}`}>
-        {share.expense_ver_status ? 'Settled' : 'Pending'}
-      </span>
+      {showSettleBtn ? (
+        <button
+          className="settle-btn"
+          onClick={onSettle}
+          disabled={isSettling}
+          aria-label="Settle your share"
+        >
+          {isSettling ? (
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'spin 0.8s linear infinite' }}>
+              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+            </svg>
+          ) : (
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          )}
+          {isSettling ? 'Settling…' : 'Settle'}
+        </button>
+      ) : (
+        <span className={`participant-status ${share.expense_ver_status ? 'settled' : 'pending'}`}>
+          {share.expense_ver_status ? 'Settled' : 'Pending'}
+        </span>
+      )}
     </div>
   )
 }
 
-function ExpenseCard({ expense, userKey, index }: {
+function ExpenseCard({ expense, userKey, index, onRefresh }: {
   expense: Expense
   userKey: number
   index: number
+  onRefresh: () => void
 }) {
+  const [settlingKey, setSettlingKey] = useState<number | null>(null)
+  const [deleting, setDeleting] = useState(false)
+
+  const handleSettle = useCallback((expenseVerKey: number) => {
+    setSettlingKey(expenseVerKey)
+    settleExpense(expenseVerKey)
+      .then(() => onRefresh())
+      .catch(() => {})
+      .finally(() => setSettlingKey(null))
+  }, [onRefresh])
+
+  const handleDelete = useCallback(() => {
+    setDeleting(true)
+    deleteExpense(expense.expense_key)
+      .then(() => onRefresh())
+      .catch(() => setDeleting(false))
+  }, [expense.expense_key, onRefresh])
+
   const { isPayer, amount } = getMyFinancials(expense, userKey)
   const color = isPayer ? 'green' : 'red'
   const currency = expense.currency_code
@@ -109,9 +152,31 @@ function ExpenseCard({ expense, userKey, index }: {
         {/* Title row */}
         <div className="expense-top-row">
           <h3 className="expense-desc">{expense.expense_desc}</h3>
-          <span className="expense-total">
-            {formatAmount(expense.total_amount, currency)}
-          </span>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px', flexShrink: 0 }}>
+            <span className="expense-total">
+              {formatAmount(expense.total_amount, currency)}
+            </span>
+            <button
+              className="delete-expense-btn"
+              onClick={handleDelete}
+              disabled={deleting}
+              aria-label="Delete expense"
+            >
+              {deleting ? (
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'spin 0.8s linear infinite' }}>
+                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                </svg>
+              ) : (
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                  <path d="M10 11v6M14 11v6" />
+                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                </svg>
+              )}
+              {deleting ? 'Deleting…' : 'Delete'}
+            </button>
+          </div>
         </div>
 
         {/* Meta badges */}
@@ -159,6 +224,9 @@ function ExpenseCard({ expense, userKey, index }: {
             share={share}
             currency={currency}
             userKey={userKey}
+            isPayer={isPayer}
+            onSettle={() => handleSettle(share.expense_ver_key)}
+            isSettling={settlingKey === share.expense_ver_key}
           />
         ))}
       </div>
@@ -444,6 +512,7 @@ export default function HomePage() {
                 expense={exp}
                 userKey={myKey}
                 index={i}
+                onRefresh={fetchExpenses}
               />
             ))}
           </div>

@@ -17,3 +17,11 @@ export interface DivisionMethod {
 export function getAllDivisionMethods(): Promise<DivisionMethod[]> {
   return apiClient.get<DivisionMethod[]>('/divide_by/get_all')
 }
+
+export function settleExpense(expenseVerKey: number): Promise<void> {
+  return apiClient.put<void>(`/expense/settle?expense_ver_key=${expenseVerKey}`)
+}
+
+export function deleteExpense(expenseKey: number): Promise<void> {
+  return apiClient.delete<void>(`/expense/delete?expense_key=${expenseKey}`)
+}
