@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { createExpense } from '../services/expenseService'
+import { createExpense, getAllDivisionMethods } from '../services/expenseService'
+import type { DivisionMethod } from '../services/expenseService'
+import { getAllUsers } from '../services/userService'
+import type { UserSummary } from '../services/userService'
 import { ApiError } from '../lib/apiClient'
 import type { SecondaryShare } from '../types/expense'
 import type { Currency } from '../types/currency'
@@ -10,11 +13,6 @@ interface CreateExpenseModalProps {
   onClose: () => void
   onSuccess: () => void
 }
-
-const DIVISION_OPTIONS = [
-  { key: 1, label: 'Split equally' },
-  { key: 2, label: 'By specific amount' },
-]
 
 const CloseIcon = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
@@ -179,6 +177,155 @@ function CurrencySelect({ currencies, value, onChange }: {
   )
 }
 
+// ── Searchable user picker ───────────────────────────────────────
+function UserSelect({ users, value, onChange }: {
+  users: UserSummary[]
+  value: string
+  onChange: (key: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const wrapperRef = useRef<HTMLDivElement>(null)
+  const searchRef = useRef<HTMLInputElement>(null)
+
+  const selected = users.find(u => String(u.user_key) === value)
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return users
+    return users.filter(u => u.username.toLowerCase().includes(q))
+  }, [users, query])
+
+  const toggle = () => {
+    setOpen(o => {
+      if (!o) setTimeout(() => searchRef.current?.focus(), 30)
+      else setQuery('')
+      return !o
+    })
+  }
+
+  const select = (key: string) => {
+    onChange(key)
+    setOpen(false)
+    setQuery('')
+  }
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setOpen(false)
+        setQuery('')
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation()
+        setOpen(false)
+        setQuery('')
+      }
+    }
+    document.addEventListener('keydown', handler, { capture: true })
+    return () => document.removeEventListener('keydown', handler, { capture: true })
+  }, [open])
+
+  return (
+    <div className="ce-currency-wrap" ref={wrapperRef}>
+      <button
+        type="button"
+        className={`ce-currency-trigger${open ? ' open' : ''}`}
+        onClick={toggle}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        <span className="ce-currency-code-badge">
+          {selected ? `#${selected.user_key}` : '—'}
+        </span>
+        <span className="ce-currency-trigger-label">
+          {selected
+            ? selected.username
+            : users.length === 0 ? 'Loading…' : 'Select participant'}
+        </span>
+        <svg
+          className={`ce-chevron${open ? ' open' : ''}`}
+          width="12" height="12" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" strokeWidth="2.2"
+          strokeLinecap="round" strokeLinejoin="round"
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+
+      {open && (
+        <div className="ce-currency-panel" role="listbox">
+          <div className="ce-currency-search-row">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" strokeWidth="2"
+              strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              ref={searchRef}
+              type="text"
+              className="ce-currency-search"
+              placeholder="Search by username or name…"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              onClick={e => e.stopPropagation()}
+            />
+            {query && (
+              <button
+                type="button"
+                className="ce-currency-search-clear"
+                onClick={() => setQuery('')}
+                aria-label="Clear search"
+              >
+                <CloseIcon />
+              </button>
+            )}
+          </div>
+
+          <div className="ce-currency-list">
+            {filtered.length === 0 ? (
+              <div className="ce-currency-empty">No users match "{query}"</div>
+            ) : (
+              filtered.map(u => (
+                <button
+                  key={u.user_key}
+                  type="button"
+                  role="option"
+                  aria-selected={String(u.user_key) === value}
+                  className={`ce-currency-option${String(u.user_key) === value ? ' active' : ''}`}
+                  onClick={() => select(String(u.user_key))}
+                >
+                  <span className="ce-currency-option-code">#{u.user_key}</span>
+                  <span className="ce-currency-option-name">
+                    {u.username}
+                  </span>
+                  {String(u.user_key) === value && (
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" strokeWidth="2.5"
+                      strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  )}
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 const ReceiptIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
     stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -199,19 +346,25 @@ interface ParticipantRow {
 export default function CreateExpenseModal({ userKey, currencies, onClose, onSuccess }: CreateExpenseModalProps) {
   const [desc, setDesc] = useState('')
   const [totalAmount, setTotalAmount] = useState('')
-  const [currencyKey, setCurrencyKey] = useState(() => currencies[0]?.currency_key ?? 0)
-  const [divisionKey, setDivisionKey] = useState(1)
+  const [currencyKey, setCurrencyKey] = useState(() => {
+    const inr = currencies.find(c => c.currency_code === 'INR')
+    return (inr ?? currencies[0])?.currency_key ?? 0
+  })
+  const [divisionKey, setDivisionKey] = useState(0)
+  const [divisionMethods, setDivisionMethods] = useState<DivisionMethod[]>([])
+  const [primaryUserKey, setPrimaryUserKey] = useState(String(userKey))
   const [participants, setParticipants] = useState<ParticipantRow[]>([
     { id: 1, userKey: '', share: '' },
   ])
   const [nextId, setNextId] = useState(2)
+  const [allUsers, setAllUsers] = useState<UserSummary[]>([])
 
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [apiError, setApiError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   const descRef = useRef<HTMLInputElement>(null)
-  const isByAmount = divisionKey === 2
+  const isByAmount = divisionMethods.find(d => d.division_by_key === divisionKey)?.division_by_code === 'AMOUNT'
 
   useEffect(() => {
     const t = setTimeout(() => descRef.current?.focus(), 60)
@@ -221,6 +374,21 @@ export default function CreateExpenseModal({ userKey, currencies, onClose, onSuc
       clearTimeout(t)
       document.body.style.overflow = prev
     }
+  }, [])
+
+  useEffect(() => {
+    getAllUsers()
+      .then(setAllUsers)
+      .catch(() => { /* silently fail — users list stays empty */ })
+  }, [])
+
+  useEffect(() => {
+    getAllDivisionMethods()
+      .then(methods => {
+        setDivisionMethods(methods)
+        if (methods.length > 0) setDivisionKey(methods[0].division_by_key)
+      })
+      .catch(() => { /* silently fail — select stays empty */ })
   }, [])
 
   useEffect(() => {
@@ -252,6 +420,9 @@ export default function CreateExpenseModal({ userKey, currencies, onClose, onSuc
     const errs: Record<string, string> = {}
 
     if (!desc.trim()) errs.desc = 'Description is required'
+
+    const pk = parseInt(primaryUserKey)
+    if (!primaryUserKey || isNaN(pk) || pk <= 0) errs.primaryUserKey = 'Select a primary user'
 
     const amt = parseFloat(totalAmount)
     if (!totalAmount || isNaN(amt) || amt <= 0) errs.totalAmount = 'Enter a valid positive amount'
@@ -286,7 +457,7 @@ export default function CreateExpenseModal({ userKey, currencies, onClose, onSuc
       }))
 
       await createExpense({
-        primary_user_key: userKey,
+        primary_user_key: parseInt(primaryUserKey),
         currency_key: currencyKey,
         division_by_key: divisionKey,
         total_amount: parseFloat(totalAmount),
@@ -359,9 +530,8 @@ export default function CreateExpenseModal({ userKey, currencies, onClose, onSuc
               <label className="field-label" htmlFor="ce-amount">Total Amount</label>
               <input
                 id="ce-amount"
-                type="number"
-                min="0.01"
-                step="0.01"
+                type="text"
+                inputMode="decimal"
                 className={`auth-input${errors.totalAmount ? ' error' : ''}`}
                 placeholder="0.00"
                 value={totalAmount}
@@ -388,8 +558,10 @@ export default function CreateExpenseModal({ userKey, currencies, onClose, onSuc
               value={divisionKey}
               onChange={e => setDivisionKey(Number(e.target.value))}
             >
-              {DIVISION_OPTIONS.map(d => (
-                <option key={d.key} value={d.key}>{d.label}</option>
+              {divisionMethods.map(d => (
+                <option key={d.division_by_key} value={d.division_by_key}>
+                  {d.division_by_code.charAt(0) + d.division_by_code.slice(1).toLowerCase().replace(/_/g, ' ')}
+                </option>
               ))}
             </select>
           </div>
@@ -409,18 +581,28 @@ export default function CreateExpenseModal({ userKey, currencies, onClose, onSuc
             )}
 
             <div className="ce-participants-list">
+              {/* Primary user selector */}
+              <div className="ce-primary-row">
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <UserSelect
+                    users={allUsers}
+                    value={primaryUserKey}
+                    onChange={key => { setPrimaryUserKey(key); if (errors.primaryUserKey) setErrors(e => { const n = { ...e }; delete n.primaryUserKey; return n }) }}
+                  />
+                  {errors.primaryUserKey && (
+                    <p className="field-error" style={{ marginTop: 3 }}>{errors.primaryUserKey}</p>
+                  )}
+                </div>
+                <span className="ce-primary-badge">Primary</span>
+              </div>
+
               {participants.map((p, idx) => (
                 <div key={p.id} className="ce-participant-row">
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <input
-                      type="number"
-                      min="1"
-                      step="1"
-                      className={`auth-input${errors[`p_${p.id}_userKey`] ? ' error' : ''}`}
-                      placeholder={`User key`}
+                    <UserSelect
+                      users={allUsers}
                       value={p.userKey}
-                      onChange={e => updateParticipant(p.id, 'userKey', e.target.value)}
-                      aria-label={`Participant ${idx + 1} user key`}
+                      onChange={key => updateParticipant(p.id, 'userKey', key)}
                     />
                     {errors[`p_${p.id}_userKey`] && (
                       <p className="field-error" style={{ marginTop: 3 }}>{errors[`p_${p.id}_userKey`]}</p>
@@ -430,9 +612,8 @@ export default function CreateExpenseModal({ userKey, currencies, onClose, onSuc
                   {isByAmount && (
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <input
-                        type="number"
-                        min="0.01"
-                        step="0.01"
+                        type="text"
+                        inputMode="decimal"
                         className={`auth-input${errors[`p_${p.id}_share`] ? ' error' : ''}`}
                         placeholder="0.00"
                         value={p.share}

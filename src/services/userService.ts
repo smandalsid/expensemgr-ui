@@ -5,6 +5,15 @@ export function getUser(): Promise<User> {
   return apiClient.get<User>('/users/')
 }
 
+export interface UserSummary {
+  username: string
+  user_key: number
+}
+
+export function getAllUsers(): Promise<UserSummary[]> {
+  return apiClient.get<UserSummary[]>('/users/get_all')
+}
+
 export interface ChangePasswordPayload {
   old_password: string
   new_password: string
