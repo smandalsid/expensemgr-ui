@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { createExpense, getAllDivisionMethods } from '../services/expenseService'
+import { createPortal } from 'react-dom'
+import { createExpense, getAllDivisionMethods, editExpense as editExpenseApi } from '../services/expenseService'
 import type { DivisionMethod } from '../services/expenseService'
 import { getAllUsers } from '../services/userService'
 import type { UserSummary } from '../services/userService'
 import { ApiError } from '../lib/apiClient'
-import type { SecondaryShare } from '../types/expense'
+import type { SecondaryShare, Expense } from '../types/expense'
 import type { Currency } from '../types/currency'
 
 interface CreateExpenseModalProps {
@@ -12,6 +13,7 @@ interface CreateExpenseModalProps {
   currencies: Currency[]
   onClose: () => void
   onSuccess: () => void
+  editExpense?: Expense
 }
 
 const CloseIcon = () => (
@@ -30,7 +32,9 @@ function CurrencySelect({ currencies, value, onChange }: {
 }) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
+  const [panelStyle, setPanelStyle] = useState<React.CSSProperties>({})
   const wrapperRef = useRef<HTMLDivElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLInputElement>(null)
 
   const selected = currencies.find(c => c.currency_key === value)
@@ -46,11 +50,14 @@ function CurrencySelect({ currencies, value, onChange }: {
   }, [currencies, query])
 
   const toggle = () => {
-    setOpen(o => {
-      if (!o) setTimeout(() => searchRef.current?.focus(), 30)
-      else setQuery('')
-      return !o
-    })
+    const willOpen = !open
+    if (willOpen && wrapperRef.current) {
+      const rect = wrapperRef.current.getBoundingClientRect()
+      setPanelStyle({ position: 'fixed', top: rect.bottom + 4, left: rect.left, width: rect.width, zIndex: 9999 })
+    }
+    if (!willOpen) setQuery('')
+    setOpen(willOpen)
+    if (willOpen) setTimeout(() => searchRef.current?.focus(), 30)
   }
 
   const select = (key: number) => {
@@ -63,13 +70,24 @@ function CurrencySelect({ currencies, value, onChange }: {
   useEffect(() => {
     if (!open) return
     const handler = (e: MouseEvent) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+      if (
+        wrapperRef.current && !wrapperRef.current.contains(e.target as Node) &&
+        panelRef.current && !panelRef.current.contains(e.target as Node)
+      ) {
         setOpen(false)
         setQuery('')
       }
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  // Close when the form scrolls (portal can't reposition itself)
+  useEffect(() => {
+    if (!open) return
+    const handler = () => { setOpen(false); setQuery('') }
+    document.addEventListener('scroll', handler, true)
+    return () => document.removeEventListener('scroll', handler, true)
   }, [open])
 
   // Escape closes just this dropdown, not the whole modal
@@ -113,8 +131,8 @@ function CurrencySelect({ currencies, value, onChange }: {
         </svg>
       </button>
 
-      {open && (
-        <div className="ce-currency-panel" role="listbox">
+      {open && createPortal(
+        <div ref={panelRef} className="ce-currency-panel" style={panelStyle} role="listbox">
           <div className="ce-currency-search-row">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" strokeWidth="2"
@@ -172,7 +190,7 @@ function CurrencySelect({ currencies, value, onChange }: {
             )}
           </div>
         </div>
-      )}
+      , document.body)}
     </div>
   )
 }
@@ -185,7 +203,9 @@ function UserSelect({ users, value, onChange }: {
 }) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
+  const [panelStyle, setPanelStyle] = useState<React.CSSProperties>({})
   const wrapperRef = useRef<HTMLDivElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLInputElement>(null)
 
   const selected = users.find(u => String(u.user_key) === value)
@@ -197,11 +217,14 @@ function UserSelect({ users, value, onChange }: {
   }, [users, query])
 
   const toggle = () => {
-    setOpen(o => {
-      if (!o) setTimeout(() => searchRef.current?.focus(), 30)
-      else setQuery('')
-      return !o
-    })
+    const willOpen = !open
+    if (willOpen && wrapperRef.current) {
+      const rect = wrapperRef.current.getBoundingClientRect()
+      setPanelStyle({ position: 'fixed', top: rect.bottom + 4, left: rect.left, width: rect.width, zIndex: 9999 })
+    }
+    if (!willOpen) setQuery('')
+    setOpen(willOpen)
+    if (willOpen) setTimeout(() => searchRef.current?.focus(), 30)
   }
 
   const select = (key: string) => {
@@ -213,13 +236,24 @@ function UserSelect({ users, value, onChange }: {
   useEffect(() => {
     if (!open) return
     const handler = (e: MouseEvent) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+      if (
+        wrapperRef.current && !wrapperRef.current.contains(e.target as Node) &&
+        panelRef.current && !panelRef.current.contains(e.target as Node)
+      ) {
         setOpen(false)
         setQuery('')
       }
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  // Close when the form scrolls (portal can't reposition itself)
+  useEffect(() => {
+    if (!open) return
+    const handler = () => { setOpen(false); setQuery('') }
+    document.addEventListener('scroll', handler, true)
+    return () => document.removeEventListener('scroll', handler, true)
   }, [open])
 
   useEffect(() => {
@@ -262,8 +296,8 @@ function UserSelect({ users, value, onChange }: {
         </svg>
       </button>
 
-      {open && (
-        <div className="ce-currency-panel" role="listbox">
+      {open && createPortal(
+        <div ref={panelRef} className="ce-currency-panel" style={panelStyle} role="listbox">
           <div className="ce-currency-search-row">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" strokeWidth="2"
@@ -321,7 +355,7 @@ function UserSelect({ users, value, onChange }: {
             )}
           </div>
         </div>
-      )}
+      , document.body)}
     </div>
   )
 }
@@ -337,26 +371,53 @@ const ReceiptIcon = () => (
   </svg>
 )
 
+const AutoSplitIcon = () => (
+  <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="5" y1="9" x2="19" y2="9" />
+    <line x1="5" y1="15" x2="19" y2="15" />
+  </svg>
+)
+
 interface ParticipantRow {
   id: number
   userKey: string
   share: string
+  expenseVerKey?: number
 }
 
-export default function CreateExpenseModal({ userKey, currencies, onClose, onSuccess }: CreateExpenseModalProps) {
-  const [desc, setDesc] = useState('')
-  const [totalAmount, setTotalAmount] = useState('')
+export default function CreateExpenseModal({ userKey, currencies, onClose, onSuccess, editExpense }: CreateExpenseModalProps) {
+  const isEditing = Boolean(editExpense)
+
+  const [desc, setDesc] = useState(editExpense?.expense_desc ?? '')
+  const [totalAmount, setTotalAmount] = useState(editExpense ? String(editExpense.total_amount) : '')
   const [currencyKey, setCurrencyKey] = useState(() => {
+    if (editExpense) {
+      const match = currencies.find(c => c.currency_code === editExpense.currency_code)
+      if (match) return match.currency_key
+    }
     const inr = currencies.find(c => c.currency_code === 'INR')
     return (inr ?? currencies[0])?.currency_key ?? 0
   })
   const [divisionKey, setDivisionKey] = useState(0)
   const [divisionMethods, setDivisionMethods] = useState<DivisionMethod[]>([])
-  const [primaryUserKey, setPrimaryUserKey] = useState(String(userKey))
-  const [participants, setParticipants] = useState<ParticipantRow[]>([
-    { id: 1, userKey: '', share: '' },
-  ])
-  const [nextId, setNextId] = useState(2)
+  const [primaryUserKey, setPrimaryUserKey] = useState(editExpense ? String(editExpense.primary_user_key) : String(userKey))
+  const [participants, setParticipants] = useState<ParticipantRow[]>(() => {
+    if (editExpense && editExpense.expense_share.length > 0) {
+      return editExpense.expense_share.map((s, i) => ({
+        id: i + 1,
+        userKey: String(s.secondary_user_key),
+        share: String(s.expense_share),
+        expenseVerKey: s.expense_ver_key,
+      }))
+    }
+    return [{ id: 1, userKey: '', share: '' }]
+  })
+  const [nextId, setNextId] = useState(() =>
+    editExpense && editExpense.expense_share.length > 0
+      ? editExpense.expense_share.length + 1
+      : 2
+  )
   const [allUsers, setAllUsers] = useState<UserSummary[]>([])
 
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -365,6 +426,8 @@ export default function CreateExpenseModal({ userKey, currencies, onClose, onSuc
 
   const descRef = useRef<HTMLInputElement>(null)
   const isByAmount = divisionMethods.find(d => d.division_by_key === divisionKey)?.division_by_code === 'AMOUNT'
+  const isByPercentage = divisionMethods.find(d => d.division_by_key === divisionKey)?.division_by_code === 'PERCENTAGE'
+  const showShares = isByAmount || isByPercentage
 
   useEffect(() => {
     const t = setTimeout(() => descRef.current?.focus(), 60)
@@ -386,16 +449,35 @@ export default function CreateExpenseModal({ userKey, currencies, onClose, onSuc
     getAllDivisionMethods()
       .then(methods => {
         setDivisionMethods(methods)
-        if (methods.length > 0) setDivisionKey(methods[0].division_by_key)
+        if (editExpense) {
+          const match = methods.find(m => m.division_by_code === editExpense.division_by_code)
+          setDivisionKey(match ? match.division_by_key : (methods[0]?.division_by_key ?? 0))
+        } else if (methods.length > 0) {
+          setDivisionKey(methods[0].division_by_key)
+        }
       })
       .catch(() => { /* silently fail — select stays empty */ })
-  }, [])
+  }, [editExpense])
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [onClose])
+
+  const handleAutoSplit = () => {
+    const count = participants.length
+    if (count === 0) return
+    if (isByAmount) {
+      const amt = parseFloat(totalAmount)
+      if (!totalAmount || isNaN(amt) || amt <= 0) return
+      const share = (amt / count).toFixed(2)
+      setParticipants(prev => prev.map(p => ({ ...p, share })))
+    } else if (isByPercentage) {
+      const share = (100 / count).toFixed(2)
+      setParticipants(prev => prev.map(p => ({ ...p, share })))
+    }
+  }
 
   const addParticipant = () => {
     setParticipants(prev => [...prev, { id: nextId, userKey: '', share: '' }])
@@ -433,9 +515,9 @@ export default function CreateExpenseModal({ userKey, currencies, onClose, onSuc
       participants.forEach(p => {
         const uk = parseInt(p.userKey)
         if (!p.userKey || isNaN(uk) || uk <= 0) errs[`p_${p.id}_userKey`] = 'Enter a valid user key'
-        if (isByAmount) {
+        if (showShares) {
           const share = parseFloat(p.share)
-          if (!p.share || isNaN(share) || share <= 0) errs[`p_${p.id}_share`] = 'Enter share amount'
+          if (!p.share || isNaN(share) || share <= 0) errs[`p_${p.id}_share`] = isByAmount ? 'Enter share amount' : 'Enter percentage'
         }
       })
     }
@@ -453,17 +535,30 @@ export default function CreateExpenseModal({ userKey, currencies, onClose, onSuc
     try {
       const secondary: SecondaryShare[] = participants.map(p => ({
         user_key: parseInt(p.userKey),
-        user_share: isByAmount ? parseFloat(p.share) : 0,
+        user_share: showShares ? parseFloat(p.share) : 0,
+        ...(isEditing && p.expenseVerKey !== undefined ? { expense_ver_key: p.expenseVerKey } : {}),
       }))
 
-      await createExpense({
-        primary_user_key: parseInt(primaryUserKey),
-        currency_key: currencyKey,
-        division_by_key: divisionKey,
-        total_amount: parseFloat(totalAmount),
-        expense_desc: desc.trim(),
-        user_expense_secondary_share: secondary,
-      })
+      if (isEditing && editExpense) {
+        await editExpenseApi({
+          primary_user_key: parseInt(primaryUserKey),
+          currency_key: currencyKey,
+          division_by_key: divisionKey,
+          total_amount: parseFloat(totalAmount),
+          expense_desc: desc.trim(),
+          user_expense_secondary_share: secondary,
+          expense_key: editExpense.expense_key,
+        })
+      } else {
+        await createExpense({
+          primary_user_key: parseInt(primaryUserKey),
+          currency_key: currencyKey,
+          division_by_key: divisionKey,
+          total_amount: parseFloat(totalAmount),
+          expense_desc: desc.trim(),
+          user_expense_secondary_share: secondary,
+        })
+      }
 
       onSuccess()
     } catch (err) {
@@ -496,8 +591,8 @@ export default function CreateExpenseModal({ userKey, currencies, onClose, onSuc
               <ReceiptIcon />
             </div>
             <div>
-              <h2 className="cp-title">New Expense</h2>
-              <p className="cp-subtitle">Split a cost with others</p>
+              <h2 className="cp-title">{isEditing ? 'Edit Expense' : 'New Expense'}</h2>
+              <p className="cp-subtitle">{isEditing ? 'Update expense details' : 'Split a cost with others'}</p>
             </div>
           </div>
           <button className="cp-close-btn" onClick={onClose} aria-label="Close" type="button">
@@ -570,8 +665,20 @@ export default function CreateExpenseModal({ userKey, currencies, onClose, onSuc
           <div className="field-group">
             <div className="ce-participants-header">
               <span className="field-label" style={{ margin: 0 }}>Participants</span>
-              {isByAmount && (
-                <span className="ce-col-hint">User Key / Share</span>
+              {showShares && (
+                <div className="ce-participants-header-right">
+                  <button
+                    type="button"
+                    className="ce-split-equally-btn"
+                    onClick={handleAutoSplit}
+                    disabled={participants.length === 0 || (isByAmount && (!totalAmount || isNaN(parseFloat(totalAmount)) || parseFloat(totalAmount) <= 0))}
+                    title={isByAmount ? 'Distribute total amount equally among participants' : 'Distribute 100% equally among participants'}
+                  >
+                    <AutoSplitIcon />
+                    Split equally
+                  </button>
+                  <span className="ce-col-hint">User / {isByAmount ? 'Amount' : '%'}</span>
+                </div>
               )}
             </div>
             {errors.participants && (
@@ -609,16 +716,16 @@ export default function CreateExpenseModal({ userKey, currencies, onClose, onSuc
                     )}
                   </div>
 
-                  {isByAmount && (
+                  {showShares && (
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <input
                         type="text"
                         inputMode="decimal"
                         className={`auth-input${errors[`p_${p.id}_share`] ? ' error' : ''}`}
-                        placeholder="0.00"
+                        placeholder={isByAmount ? '0.00' : '0'}
                         value={p.share}
                         onChange={e => updateParticipant(p.id, 'share', e.target.value)}
-                        aria-label={`Participant ${idx + 1} share amount`}
+                        aria-label={`Participant ${idx + 1} ${isByAmount ? 'share amount' : 'percentage'}`}
                       />
                       {errors[`p_${p.id}_share`] && (
                         <p className="field-error" style={{ marginTop: 3 }}>{errors[`p_${p.id}_share`]}</p>
@@ -661,7 +768,7 @@ export default function CreateExpenseModal({ userKey, currencies, onClose, onSuc
             disabled={loading}
             style={{ marginTop: '0.5rem' }}
           >
-            {loading ? 'Creating…' : 'Create Expense'}
+            {loading ? (isEditing ? 'Saving…' : 'Creating…') : (isEditing ? 'Save Changes' : 'Create Expense')}
           </button>
         </form>
       </div>

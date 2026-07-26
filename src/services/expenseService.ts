@@ -1,5 +1,5 @@
 import { apiClient } from '../lib/apiClient'
-import type { Expense, CreateExpenseRequest } from '../types/expense'
+import type { Expense, CreateExpenseRequest, EditExpenseRequest } from '../types/expense'
 
 export function getActiveExpenses(): Promise<Expense[]> {
   return apiClient.get<Expense[]>('/expense/get_active')
@@ -24,4 +24,8 @@ export function settleExpense(expenseVerKey: number): Promise<void> {
 
 export function deleteExpense(expenseKey: number): Promise<void> {
   return apiClient.delete<void>(`/expense/delete?expense_key=${expenseKey}`)
+}
+
+export function editExpense(payload: EditExpenseRequest): Promise<Expense> {
+  return apiClient.put<Expense>('/expense/edit', payload as unknown as Record<string, unknown>)
 }

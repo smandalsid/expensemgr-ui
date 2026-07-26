@@ -894,6 +894,29 @@ button:focus-visible {
   cursor: not-allowed;
 }
 
+/* ── Edit expense button ─────────────────────────────────────── */
+.edit-expense-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: "Outfit", sans-serif;
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.03);
+  color: #4a4a6a;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+.edit-expense-btn:hover {
+  background: rgba(99,102,241,0.1);
+  border-color: rgba(99,102,241,0.3);
+  color: #818cf8;
+}
+
 /* ── Delete expense button ───────────────────────────────────── */
 .delete-expense-btn {
   display: inline-flex;
@@ -1225,6 +1248,41 @@ button:focus-visible {
   margin-bottom: 10px;
 }
 
+.ce-participants-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ce-split-equally-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.22);
+  border-radius: 7px;
+  color: #818cf8;
+  font-family: "Outfit", sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 9px;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+  white-space: nowrap;
+}
+
+.ce-split-equally-btn:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.4);
+  color: #a5b4fc;
+}
+
+.ce-split-equally-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 .ce-col-hint {
   font-family: "Outfit", sans-serif;
   font-size: 10.5px;
@@ -1440,11 +1498,11 @@ button:focus-visible {
 }
 
 .ce-currency-panel {
-  margin-top: 4px;
   border: 1px solid rgba(201, 169, 110, 0.2);
   border-radius: 12px;
   background: #0e0e26;
   overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
 .ce-currency-search-row {

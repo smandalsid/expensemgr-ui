@@ -113,11 +113,12 @@ function ParticipantRow({ share, currency, userKey, isPayer, onSettle, isSettlin
   )
 }
 
-function ExpenseCard({ expense, userKey, index, onRefresh }: {
+function ExpenseCard({ expense, userKey, index, onRefresh, onEdit }: {
   expense: Expense
   userKey: number
   index: number
   onRefresh: () => void
+  onEdit: (expense: Expense) => void
 }) {
   const [settlingKey, setSettlingKey] = useState<number | null>(null)
   const [deleting, setDeleting] = useState(false)
@@ -192,26 +193,39 @@ function ExpenseCard({ expense, userKey, index, onRefresh }: {
             <span className="expense-total">
               {formatAmount(expense.total_amount, currency)}
             </span>
-            <button
-              className="delete-expense-btn"
-              onClick={handleDelete}
-              disabled={deleting}
-              aria-label="Delete expense"
-            >
-              {deleting ? (
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'spin 0.8s linear infinite' }}>
-                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+              <button
+                className="edit-expense-btn"
+                onClick={() => onEdit(expense)}
+                aria-label="Edit expense"
+              >
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
                 </svg>
-              ) : (
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="3 6 5 6 21 6" />
-                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                  <path d="M10 11v6M14 11v6" />
-                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                </svg>
-              )}
-              {deleting ? 'Deleting…' : 'Delete'}
-            </button>
+                Edit
+              </button>
+              <button
+                className="delete-expense-btn"
+                onClick={handleDelete}
+                disabled={deleting}
+                aria-label="Delete expense"
+              >
+                {deleting ? (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'spin 0.8s linear infinite' }}>
+                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                  </svg>
+                ) : (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                    <path d="M10 11v6M14 11v6" />
+                    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                  </svg>
+                )}
+                {deleting ? 'Deleting…' : 'Delete'}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -313,6 +327,7 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null)
   const [showChangePassword, setShowChangePassword] = useState(false)
   const [showCreateExpense, setShowCreateExpense] = useState(false)
+  const [editExpense, setEditExpense] = useState<Expense | null>(null)
 
   const fetchExpenses = useCallback(() => {
     setExpensesLoading(true)
@@ -559,8 +574,7 @@ export default function HomePage() {
                 expense={exp}
                 userKey={myKey}
                 index={i}
-                onRefresh={fetchExpenses}
-              />
+                onRefresh={fetchExpenses}                onEdit={setEditExpense}              />
             ))}
           </div>
         )}
@@ -581,6 +595,19 @@ export default function HomePage() {
           onClose={() => setShowCreateExpense(false)}
           onSuccess={() => {
             setShowCreateExpense(false)
+            fetchExpenses()
+          }}
+        />
+      )}
+
+      {editExpense !== null && myKey !== null && (
+        <CreateExpenseModal
+          userKey={myKey}
+          currencies={currencies}
+          editExpense={editExpense}
+          onClose={() => setEditExpense(null)}
+          onSuccess={() => {
+            setEditExpense(null)
             fetchExpenses()
           }}
         />
