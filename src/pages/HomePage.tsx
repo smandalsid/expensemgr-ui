@@ -6,6 +6,7 @@ import type { Expense, ExpenseShare } from '../types/expense'
 import type { Currency } from '../types/currency'
 import ChangePasswordModal from '../components/ChangePasswordModal'
 import CreateExpenseModal from '../components/CreateExpenseModal'
+import ConfirmationBar from '../components/ConfirmationBar'
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
@@ -120,21 +121,56 @@ function ExpenseCard({ expense, userKey, index, onRefresh }: {
 }) {
   const [settlingKey, setSettlingKey] = useState<number | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [confirmation, setConfirmation] = useState<{
+    isOpen: boolean
+    type: 'settle' | 'delete'
+    data: number | string
+    title: string
+    desc: string
+  } | null>(null)
 
   const handleSettle = useCallback((expenseVerKey: number) => {
-    setSettlingKey(expenseVerKey)
-    settleExpense(expenseVerKey)
-      .then(() => onRefresh())
+    setConfirmation({
+      isOpen: true,
+      type: 'settle',
+      data: expenseVerKey,
+      title: 'Confirm Settlement',
+      desc: `Are you sure you want to settle this share?`
+    })
+  }, [])
+
+  const executeSettle = () => {
+    if (!confirmation) return
+    setSettlingKey(confirmation.data as number)
+    settleExpense(confirmation.data as number)
+      .then(() => {
+        onRefresh()
+        setConfirmation(null)
+      })
       .catch(() => {})
       .finally(() => setSettlingKey(null))
-  }, [onRefresh])
+  }
 
   const handleDelete = useCallback(() => {
+    setConfirmation({
+      isOpen: true,
+      type: 'delete',
+      data: expense.expense_key,
+      title: 'Delete Expense',
+      desc: `Are you sure you want to delete the expense "${expense.expense_desc}"?`
+    })
+  }, [expense])
+
+  const executeDelete = () => {
     setDeleting(true)
     deleteExpense(expense.expense_key)
-      .then(() => onRefresh())
+      .then(() => {
+        onRefresh()
+        setConfirmation(null)
+      })
       .catch(() => setDeleting(false))
-  }, [expense.expense_key, onRefresh])
+      .finally(() => setDeleting(false))
+  }
 
   const { isPayer, amount } = getMyFinancials(expense, userKey)
   const color = isPayer ? 'green' : 'red'
@@ -230,6 +266,17 @@ function ExpenseCard({ expense, userKey, index, onRefresh }: {
           />
         ))}
       </div>
+      {confirmation && (
+        <ConfirmationBar
+          isOpen={confirmation.isOpen}
+          type={confirmation.type}
+          title={confirmation.title}
+          description={confirmation.desc}
+          onConfirm={confirmation.type === 'settle' ? executeSettle : executeDelete}
+          onCancel={() => setConfirmation(null)}
+          isLoading={settlingKey !== null || deleting}
+        />
+      )}
     </div>
   )
 }
