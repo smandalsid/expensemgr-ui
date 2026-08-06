@@ -122,6 +122,7 @@ function ExpenseCard({ expense, userKey, index, onRefresh, onEdit }: {
 }) {
   const [settlingKey, setSettlingKey] = useState<number | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [actionError, setActionError] = useState<string | null>(null)
   const [confirmation, setConfirmation] = useState<{
     isOpen: boolean
     type: 'settle' | 'delete'
@@ -142,13 +143,16 @@ function ExpenseCard({ expense, userKey, index, onRefresh, onEdit }: {
 
   const executeSettle = () => {
     if (!confirmation) return
+    setActionError(null)
     setSettlingKey(confirmation.data as number)
     settleExpense(confirmation.data as number)
       .then(() => {
         onRefresh()
         setConfirmation(null)
       })
-      .catch(() => {})
+      .catch((err: any) => {
+        setActionError(err.message || 'Failed to settle expense')
+      })
       .finally(() => setSettlingKey(null))
   }
 
@@ -163,13 +167,16 @@ function ExpenseCard({ expense, userKey, index, onRefresh, onEdit }: {
   }, [expense])
 
   const executeDelete = () => {
+    setActionError(null)
     setDeleting(true)
     deleteExpense(expense.expense_key)
       .then(() => {
         onRefresh()
         setConfirmation(null)
       })
-      .catch(() => setDeleting(false))
+      .catch((err: any) => {
+        setActionError(err.message || 'Failed to delete expense')
+      })
       .finally(() => setDeleting(false))
   }
 
@@ -287,8 +294,12 @@ function ExpenseCard({ expense, userKey, index, onRefresh, onEdit }: {
           title={confirmation.title}
           description={confirmation.desc}
           onConfirm={confirmation.type === 'settle' ? executeSettle : executeDelete}
-          onCancel={() => setConfirmation(null)}
+          onCancel={() => {
+            setConfirmation(null)
+            setActionError(null)
+          }}
           isLoading={settlingKey !== null || deleting}
+          error={actionError}
         />
       )}
     </div>
