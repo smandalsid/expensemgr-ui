@@ -8,6 +8,7 @@ interface ConfirmationBarProps {
   onConfirm: () => void
   onCancel: () => void
   isLoading?: boolean
+  error?: string | null
 }
 
 const ConfirmationBar = memo(({ 
@@ -17,7 +18,8 @@ const ConfirmationBar = memo(({
   description, 
   onConfirm, 
   onCancel, 
-  isLoading 
+  isLoading,
+  error
 }: ConfirmationBarProps) => {
   if (!isOpen) return null
 
@@ -31,6 +33,14 @@ const ConfirmationBar = memo(({
           <div className="confirmation-text">
             <h4 className="confirmation-title">{title}</h4>
             <p className="confirmation-desc">{description}</p>
+            {error && (
+              <p style={{
+                color: '#f87171', fontSize: '12px', fontWeight: 500,
+                marginTop: '8px', lineHeight: 1.4,
+              }}>
+                {error}
+              </p>
+            )}
           </div>
           <div className="confirmation-actions">
             <button 

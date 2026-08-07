@@ -2,26 +2,17 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { getActiveExpenses, settleExpense, deleteExpense } from '../services/expenseService'
 import { getCurrencies } from '../services/currencyService'
+import { getAllBalances } from '../services/balanceService'
 import type { Expense, ExpenseShare } from '../types/expense'
 import type { Currency } from '../types/currency'
+import type { UserBalance } from '../types/balance'
+import { formatAmount, initials, avatarStyle } from '../lib/format'
 import ChangePasswordModal from '../components/ChangePasswordModal'
 import CreateExpenseModal from '../components/CreateExpenseModal'
 import ConfirmationBar from '../components/ConfirmationBar'
+import BalanceOverview from '../components/BalanceOverview'
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
-
-const CURRENCY_SYMBOLS: Record<string, string> = {
-  INR: '₹', USD: '$', EUR: '€', GBP: '£', JPY: '¥', AUD: 'A$', CAD: 'C$',
-}
-
-function currencySymbol(code: string) {
-  return CURRENCY_SYMBOLS[code] ?? code
-}
-
-function formatAmount(amount: number, currency: string) {
-  const sym = currencySymbol(currency)
-  return `${sym}${amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-}
 
 function greeting() {
   const h = new Date().getHours()
@@ -30,33 +21,21 @@ function greeting() {
   return 'Good evening'
 }
 
-function initials(name: string) {
-  return name.split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase()
-}
-
-const AVATAR_PALETTE = [
-  { bg: 'rgba(201,169,110,0.18)', color: '#c9a96e' },
-  { bg: 'rgba(96,165,250,0.18)', color: '#60a5fa' },
-  { bg: 'rgba(74,222,128,0.18)', color: '#4ade80' },
-  { bg: 'rgba(167,139,250,0.18)', color: '#a78bfa' },
-  { bg: 'rgba(251,146,60,0.18)', color: '#fb923c' },
-]
-
-function avatarStyle(key: number) {
-  return AVATAR_PALETTE[key % AVATAR_PALETTE.length]
-}
-
-// For a given expense, compute how it relates to the current user
+// For a given expense, compute how it relates to the current user.
+// Settled shares (expense_ver_status === true) are excluded from outstanding amounts.
 function getMyFinancials(expense: Expense, userKey: number) {
   const isPayer = expense.primary_user_key === userKey
   const myEntry = expense.expense_share.find(s => s.secondary_user_key === userKey)
 
   if (isPayer) {
-    const myOwn = myEntry?.expense_share ?? 0
-    const owedToMe = expense.total_amount - myOwn
+    const owedToMe = expense.expense_share.reduce((sum, s) => {
+      if (s.secondary_user_key === userKey || s.expense_ver_status) return sum
+      return sum + s.expense_share
+    }, 0)
     return { isPayer: true, amount: owedToMe }
   }
-  return { isPayer: false, amount: myEntry?.expense_share ?? 0 }
+  const amount = myEntry && !myEntry.expense_ver_status ? myEntry.expense_share : 0
+  return { isPayer: false, amount }
 }
 
 // ─── Sub-components ────────────────────────────────────────────────────────
@@ -122,6 +101,7 @@ function ExpenseCard({ expense, userKey, index, onRefresh, onEdit }: {
 }) {
   const [settlingKey, setSettlingKey] = useState<number | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [actionError, setActionError] = useState<string | null>(null)
   const [confirmation, setConfirmation] = useState<{
     isOpen: boolean
     type: 'settle' | 'delete'
@@ -142,13 +122,16 @@ function ExpenseCard({ expense, userKey, index, onRefresh, onEdit }: {
 
   const executeSettle = () => {
     if (!confirmation) return
+    setActionError(null)
     setSettlingKey(confirmation.data as number)
     settleExpense(confirmation.data as number)
       .then(() => {
         onRefresh()
         setConfirmation(null)
       })
-      .catch(() => {})
+      .catch((err: any) => {
+        setActionError(err.message || 'Failed to settle expense')
+      })
       .finally(() => setSettlingKey(null))
   }
 
@@ -163,13 +146,16 @@ function ExpenseCard({ expense, userKey, index, onRefresh, onEdit }: {
   }, [expense])
 
   const executeDelete = () => {
+    setActionError(null)
     setDeleting(true)
     deleteExpense(expense.expense_key)
       .then(() => {
         onRefresh()
         setConfirmation(null)
       })
-      .catch(() => setDeleting(false))
+      .catch((err: any) => {
+        setActionError(err.message || 'Failed to delete expense')
+      })
       .finally(() => setDeleting(false))
   }
 
@@ -287,8 +273,12 @@ function ExpenseCard({ expense, userKey, index, onRefresh, onEdit }: {
           title={confirmation.title}
           description={confirmation.desc}
           onConfirm={confirmation.type === 'settle' ? executeSettle : executeDelete}
-          onCancel={() => setConfirmation(null)}
+          onCancel={() => {
+            setConfirmation(null)
+            setActionError(null)
+          }}
           isLoading={settlingKey !== null || deleting}
+          error={actionError}
         />
       )}
     </div>
@@ -325,6 +315,8 @@ export default function HomePage() {
   const [currencies, setCurrencies] = useState<Currency[]>([])
   const [expensesLoading, setExpensesLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [balances, setBalances] = useState<UserBalance[]>([])
+  const [balancesLoading, setBalancesLoading] = useState(true)
   const [showChangePassword, setShowChangePassword] = useState(false)
   const [showCreateExpense, setShowCreateExpense] = useState(false)
   const [editExpense, setEditExpense] = useState<Expense | null>(null)
@@ -338,11 +330,27 @@ export default function HomePage() {
       .finally(() => setExpensesLoading(false))
   }, [])
 
-  // Fetch expenses and currencies in parallel once on mount
+  const fetchBalances = useCallback(() => {
+    setBalancesLoading(true)
+    getAllBalances()
+      .then(data => setBalances(data ?? []))
+      .catch(() => setBalances([]))
+      .finally(() => setBalancesLoading(false))
+  }, [])
+
+  // Balances depend on expense state, so any expense mutation (create/edit/settle/delete)
+  // must refresh both to keep the "who owes what" panel in sync without a full page reload.
+  const refreshExpensesAndBalances = useCallback(() => {
+    fetchExpenses()
+    fetchBalances()
+  }, [fetchExpenses, fetchBalances])
+
+  // Fetch expenses, currencies and balances in parallel once on mount
   useEffect(() => {
     fetchExpenses()
+    fetchBalances()
     getCurrencies().then(data => setCurrencies(data ?? [])).catch(() => {})
-  }, [fetchExpenses])
+  }, [fetchExpenses, fetchBalances])
 
   // Show skeletons only until expenses are ready; user profile enriches the UI when it arrives
   const loading = expensesLoading || (userLoading && myKey === null)
@@ -527,6 +535,19 @@ export default function HomePage() {
           </div>
         )}
 
+        {/* ── Balance overview ── */}
+        {!loading && (
+          <>
+            <p className="home-section-title">Balances</p>
+            <BalanceOverview
+              balances={balances}
+              currency={primaryCurrency}
+              loading={balancesLoading}
+              onSettled={refreshExpensesAndBalances}
+            />
+          </>
+        )}
+
         {/* ── Expense list ── */}
         <p className="home-section-title">
           Active Expenses {!loading && `(${expenses.length})`}
@@ -574,7 +595,9 @@ export default function HomePage() {
                 expense={exp}
                 userKey={myKey}
                 index={i}
-                onRefresh={fetchExpenses}                onEdit={setEditExpense}              />
+                onRefresh={refreshExpensesAndBalances}
+                onEdit={setEditExpense}
+              />
             ))}
           </div>
         )}
@@ -595,7 +618,7 @@ export default function HomePage() {
           onClose={() => setShowCreateExpense(false)}
           onSuccess={() => {
             setShowCreateExpense(false)
-            fetchExpenses()
+            refreshExpensesAndBalances()
           }}
         />
       )}
@@ -608,7 +631,7 @@ export default function HomePage() {
           onClose={() => setEditExpense(null)}
           onSuccess={() => {
             setEditExpense(null)
-            fetchExpenses()
+            refreshExpensesAndBalances()
           }}
         />
       )}
