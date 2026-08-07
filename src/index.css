@@ -693,6 +693,152 @@ button:focus-visible {
   margin: 0;
 }
 
+/* ── Balance overview ──────────────────────────────────────────── */
+.balance-panel {
+  background: rgba(255,255,255,0.022);
+  border: 1px solid rgba(255,255,255,0.055);
+  border-radius: 16px;
+  margin-bottom: 2.8rem;
+  overflow: hidden;
+}
+
+.balance-scroll {
+  max-height: 320px;
+  overflow-y: auto;
+}
+.balance-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.balance-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.09);
+  border-radius: 10px;
+}
+.balance-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.balance-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.045);
+  animation: slide-up 0.4s ease both;
+  transition: background 0.16s ease;
+}
+.balance-row:last-child {
+  border-bottom: none;
+}
+.balance-row:hover {
+  background: rgba(255,255,255,0.03);
+}
+
+.balance-row-person {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+
+.balance-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Outfit", sans-serif;
+  font-size: 11.5px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.balance-row-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.balance-name {
+  font-family: "Outfit", sans-serif;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #e8e5f0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.balance-direction {
+  font-family: "Outfit", sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.balance-direction.green { color: #4ade80; }
+.balance-direction.red   { color: #f87171; }
+
+.balance-amount {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.98rem;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.balance-amount.green { color: #4ade80; }
+.balance-amount.red   { color: #f87171; }
+
+.balance-row-skeleton {
+  height: 62px;
+  border-bottom: 1px solid rgba(255,255,255,0.045);
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.022) 25%,
+    rgba(255,255,255,0.048) 50%,
+    rgba(255,255,255,0.022) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer-pass 1.5s ease infinite;
+}
+.balance-row-skeleton:last-child {
+  border-bottom: none;
+}
+
+.balance-empty {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 22px 20px;
+}
+.balance-empty-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(74,222,128,0.1);
+  color: #4ade80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.balance-empty-title {
+  font-family: "Outfit", sans-serif;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #e8e5f0;
+  margin: 0 0 3px;
+}
+.balance-empty-desc {
+  font-family: "Outfit", sans-serif;
+  font-size: 12.5px;
+  color: #3e3e62;
+  margin: 0;
+}
+
 /* ── Expense cards ─────────────────────────────────────────────── */
 .expense-list {
   display: flex;
