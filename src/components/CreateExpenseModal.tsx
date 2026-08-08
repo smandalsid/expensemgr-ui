@@ -517,7 +517,7 @@ export default function CreateExpenseModal({ userKey, currencies, onClose, onSuc
         if (!p.userKey || isNaN(uk) || uk <= 0) errs[`p_${p.id}_userKey`] = 'Enter a valid user key'
         if (showShares) {
           const share = parseFloat(p.share)
-          if (!p.share || isNaN(share) || share <= 0) errs[`p_${p.id}_share`] = isByAmount ? 'Enter share amount' : 'Enter percentage'
+          if (p.share.trim() === '' || isNaN(share) || share < 0) errs[`p_${p.id}_share`] = isByAmount ? 'Enter share amount' : 'Enter percentage'
         }
       })
     }
