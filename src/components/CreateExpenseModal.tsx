@@ -26,10 +26,33 @@ const CloseIcon = () => (
 
 // Positions a portal-rendered dropdown panel under its trigger, widening it
 // on narrow screens and clamping it so it never spills past the viewport edge.
+const MOBILE_BREAKPOINT = 640
+
 function computeDropdownPanelStyle(trigger: HTMLElement): React.CSSProperties {
-  const rect = trigger.getBoundingClientRect()
   const viewportWidth = window.innerWidth
   const margin = 8
+
+  // On phones, anchoring the panel under the trigger falls apart once the
+  // on-screen keyboard opens — the layout/visual viewport shift mobile
+  // browsers apply made the panel jump to a seemingly random spot. Instead,
+  // dock it as a fixed sheet near the top of the screen, which stays put
+  // regardless of page scroll or the keyboard's presence.
+  if (viewportWidth <= MOBILE_BREAKPOINT) {
+    const viewportHeight = window.visualViewport?.height ?? window.innerHeight
+    const top = 84
+    return {
+      position: 'fixed',
+      top,
+      left: margin,
+      right: margin,
+      width: 'auto',
+      maxHeight: Math.max(viewportHeight - top - margin, 160),
+      overflowY: 'auto',
+      zIndex: 9999,
+    }
+  }
+
+  const rect = trigger.getBoundingClientRect()
   const width = Math.min(Math.max(rect.width, 240), viewportWidth - margin * 2)
   const left = Math.min(Math.max(rect.left, margin), viewportWidth - width - margin)
   return { position: 'fixed', top: rect.bottom + 4, left, width, zIndex: 9999 }
