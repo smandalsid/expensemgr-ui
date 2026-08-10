@@ -35,18 +35,26 @@ function computeDropdownPanelStyle(trigger: HTMLElement): React.CSSProperties {
   // On phones, anchoring the panel under the trigger falls apart once the
   // on-screen keyboard opens — the layout/visual viewport shift mobile
   // browsers apply made the panel jump to a seemingly random spot. Instead,
-  // dock it as a fixed sheet near the top of the screen, which stays put
-  // regardless of page scroll or the keyboard's presence.
+  // dock it as a fixed sheet vertically centered in the visible viewport
+  // (biased slightly toward the trigger), which stays put regardless of
+  // page scroll or the keyboard's presence.
   if (viewportWidth <= MOBILE_BREAKPOINT) {
     const viewportHeight = window.visualViewport?.height ?? window.innerHeight
-    const top = 84
+    const maxHeight = Math.min(viewportHeight - margin * 2, 380)
+    const rect = trigger.getBoundingClientRect()
+    const triggerCenter = rect.top + rect.height / 2
+    const idealTop = triggerCenter - maxHeight / 2
+    const top = Math.min(
+      Math.max(idealTop, margin),
+      viewportHeight - maxHeight - margin
+    )
     return {
       position: 'fixed',
       top,
       left: margin,
       right: margin,
       width: 'auto',
-      maxHeight: Math.max(viewportHeight - top - margin, 160),
+      maxHeight,
       overflowY: 'auto',
       zIndex: 9999,
     }
