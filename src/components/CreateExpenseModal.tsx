@@ -82,12 +82,24 @@ function CurrencySelect({ currencies, value, onChange }: {
     return () => document.removeEventListener('mousedown', handler)
   }, [open])
 
-  // Close when the form scrolls (portal can't reposition itself)
+  // Reposition (instead of closing) when the page scrolls or the mobile
+  // keyboard resizes the viewport — closing here caused the panel to vanish
+  // instantly on Android Chrome as the keyboard animated in.
   useEffect(() => {
     if (!open) return
-    const handler = () => { setOpen(false); setQuery('') }
-    document.addEventListener('scroll', handler, true)
-    return () => document.removeEventListener('scroll', handler, true)
+    const reposition = () => {
+      if (!wrapperRef.current) return
+      const rect = wrapperRef.current.getBoundingClientRect()
+      setPanelStyle({ position: 'fixed', top: rect.bottom + 4, left: rect.left, width: rect.width, zIndex: 9999 })
+    }
+    document.addEventListener('scroll', reposition, true)
+    window.addEventListener('resize', reposition)
+    window.visualViewport?.addEventListener('resize', reposition)
+    return () => {
+      document.removeEventListener('scroll', reposition, true)
+      window.removeEventListener('resize', reposition)
+      window.visualViewport?.removeEventListener('resize', reposition)
+    }
   }, [open])
 
   // Escape closes just this dropdown, not the whole modal
@@ -248,12 +260,24 @@ function UserSelect({ users, value, onChange }: {
     return () => document.removeEventListener('mousedown', handler)
   }, [open])
 
-  // Close when the form scrolls (portal can't reposition itself)
+  // Reposition (instead of closing) when the page scrolls or the mobile
+  // keyboard resizes the viewport — closing here caused the panel to vanish
+  // instantly on Android Chrome as the keyboard animated in.
   useEffect(() => {
     if (!open) return
-    const handler = () => { setOpen(false); setQuery('') }
-    document.addEventListener('scroll', handler, true)
-    return () => document.removeEventListener('scroll', handler, true)
+    const reposition = () => {
+      if (!wrapperRef.current) return
+      const rect = wrapperRef.current.getBoundingClientRect()
+      setPanelStyle({ position: 'fixed', top: rect.bottom + 4, left: rect.left, width: rect.width, zIndex: 9999 })
+    }
+    document.addEventListener('scroll', reposition, true)
+    window.addEventListener('resize', reposition)
+    window.visualViewport?.addEventListener('resize', reposition)
+    return () => {
+      document.removeEventListener('scroll', reposition, true)
+      window.removeEventListener('resize', reposition)
+      window.visualViewport?.removeEventListener('resize', reposition)
+    }
   }, [open])
 
   useEffect(() => {
