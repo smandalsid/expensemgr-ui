@@ -24,6 +24,17 @@ const CloseIcon = () => (
   </svg>
 )
 
+// Positions a portal-rendered dropdown panel under its trigger, widening it
+// on narrow screens and clamping it so it never spills past the viewport edge.
+function computeDropdownPanelStyle(trigger: HTMLElement): React.CSSProperties {
+  const rect = trigger.getBoundingClientRect()
+  const viewportWidth = window.innerWidth
+  const margin = 8
+  const width = Math.min(Math.max(rect.width, 240), viewportWidth - margin * 2)
+  const left = Math.min(Math.max(rect.left, margin), viewportWidth - width - margin)
+  return { position: 'fixed', top: rect.bottom + 4, left, width, zIndex: 9999 }
+}
+
 // ── Searchable currency picker ─────────────────────────────────────
 function CurrencySelect({ currencies, value, onChange }: {
   currencies: Currency[]
@@ -52,8 +63,7 @@ function CurrencySelect({ currencies, value, onChange }: {
   const toggle = () => {
     const willOpen = !open
     if (willOpen && wrapperRef.current) {
-      const rect = wrapperRef.current.getBoundingClientRect()
-      setPanelStyle({ position: 'fixed', top: rect.bottom + 4, left: rect.left, width: rect.width, zIndex: 9999 })
+      setPanelStyle(computeDropdownPanelStyle(wrapperRef.current))
     }
     if (!willOpen) setQuery('')
     setOpen(willOpen)
@@ -89,8 +99,7 @@ function CurrencySelect({ currencies, value, onChange }: {
     if (!open) return
     const reposition = () => {
       if (!wrapperRef.current) return
-      const rect = wrapperRef.current.getBoundingClientRect()
-      setPanelStyle({ position: 'fixed', top: rect.bottom + 4, left: rect.left, width: rect.width, zIndex: 9999 })
+      setPanelStyle(computeDropdownPanelStyle(wrapperRef.current))
     }
     document.addEventListener('scroll', reposition, true)
     window.addEventListener('resize', reposition)
@@ -231,8 +240,7 @@ function UserSelect({ users, value, onChange }: {
   const toggle = () => {
     const willOpen = !open
     if (willOpen && wrapperRef.current) {
-      const rect = wrapperRef.current.getBoundingClientRect()
-      setPanelStyle({ position: 'fixed', top: rect.bottom + 4, left: rect.left, width: rect.width, zIndex: 9999 })
+      setPanelStyle(computeDropdownPanelStyle(wrapperRef.current))
     }
     if (!willOpen) setQuery('')
     setOpen(willOpen)
@@ -267,8 +275,7 @@ function UserSelect({ users, value, onChange }: {
     if (!open) return
     const reposition = () => {
       if (!wrapperRef.current) return
-      const rect = wrapperRef.current.getBoundingClientRect()
-      setPanelStyle({ position: 'fixed', top: rect.bottom + 4, left: rect.left, width: rect.width, zIndex: 9999 })
+      setPanelStyle(computeDropdownPanelStyle(wrapperRef.current))
     }
     document.addEventListener('scroll', reposition, true)
     window.addEventListener('resize', reposition)

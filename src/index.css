@@ -624,7 +624,7 @@ button:focus-visible {
 .home-nav {
   position: fixed;
   top: 0; left: 0; right: 0;
-  height: 62px;
+  min-height: 62px;
   background: rgba(9, 9, 29, 0.94);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -632,6 +632,7 @@ button:focus-visible {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   padding: 0 2rem;
   z-index: 100;
 }
@@ -643,6 +644,24 @@ button:focus-visible {
   width: 100%;
   padding: 92px 1.5rem 4rem;
   animation: fade-in 0.35s ease;
+}
+
+@media (max-width: 480px) {
+  .home-nav {
+    padding: 0 12px;
+    gap: 4px;
+  }
+  /* Full name is redundant with the avatar initials on narrow screens and was
+     pushing the action buttons off the edge of the nav bar. */
+  .home-nav-fullname {
+    display: none;
+  }
+  .home-nav-signout {
+    padding: 6px 10px !important;
+  }
+  .home-content {
+    padding-top: 84px;
+  }
 }
 
 .home-section-title {

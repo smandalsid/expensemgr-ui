@@ -410,8 +410,8 @@ export default function HomePage() {
           }}>ExpenseMgr</span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '9px', minWidth: 0 }}>
             <div style={{
               width: '32px', height: '32px',
               background: 'rgba(201,169,110,0.15)',
@@ -423,13 +423,14 @@ export default function HomePage() {
             }}>
               {user ? initials(`${user.first_name} ${user.last_name}`) : (fullName ? initials(fullName) : '…')}
             </div>
-            <span style={{
+            <span className="home-nav-fullname" style={{
               fontFamily: '"Outfit", sans-serif',
               fontSize: '13px', fontWeight: 500,
               color: fullName ? '#9090b8' : 'transparent',
               background: fullName ? 'none' : 'rgba(144,144,184,0.12)',
               borderRadius: '4px',
               minWidth: '80px',
+              whiteSpace: 'nowrap',
               transition: 'color 0.3s',
             }}>
               {fullName || '\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0'}
@@ -449,6 +450,7 @@ export default function HomePage() {
           </button>
           <button
             onClick={clearToken}
+            className="home-nav-signout"
             style={{
               background: 'rgba(255,255,255,0.04)',
               border: '1px solid rgba(255,255,255,0.07)',
@@ -457,6 +459,8 @@ export default function HomePage() {
               fontSize: '12px', fontWeight: 600,
               padding: '6px 14px', borderRadius: '8px',
               cursor: 'pointer', letterSpacing: '0.03em',
+              flexShrink: 0,
+              whiteSpace: 'nowrap',
               transition: 'color 0.2s, border-color 0.2s',
             }}
             onMouseEnter={e => {
