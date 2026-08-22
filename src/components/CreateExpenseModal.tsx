@@ -473,7 +473,9 @@ export default function CreateExpenseModal({ userKey, currencies, onClose, onSuc
         expenseVerKey: s.expense_ver_key,
       }))
     }
-    return [{ id: 1, userKey: '', share: '' }]
+    // Default the first participant row to the current user so they don't
+    // have to add themselves manually on every expense.
+    return [{ id: 1, userKey: String(userKey), share: '' }]
   })
   const [nextId, setNextId] = useState(() =>
     editExpense && editExpense.expense_share.length > 0
