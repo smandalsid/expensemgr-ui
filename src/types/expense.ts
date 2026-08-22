@@ -5,6 +5,8 @@ export interface ExpenseShare {
   expense_share: number
   expense_ver_status: boolean
   version_active_ind: boolean
+  meta_created_dttm: string
+  meta_changed_dttm: string
 }
 
 export interface Expense {

@@ -6,7 +6,7 @@ import { getAllBalances } from '../services/balanceService'
 import type { Expense, ExpenseShare } from '../types/expense'
 import type { Currency } from '../types/currency'
 import type { UserBalance } from '../types/balance'
-import { formatAmount, initials, avatarStyle } from '../lib/format'
+import { formatAmount, initials, avatarStyle, formatDateTime } from '../lib/format'
 import ChangePasswordModal from '../components/ChangePasswordModal'
 import CreateExpenseModal from '../components/CreateExpenseModal'
 import ConfirmationBar from '../components/ConfirmationBar'
@@ -36,6 +36,20 @@ function getMyFinancials(expense: Expense, userKey: number) {
   }
   const amount = myEntry && !myEntry.expense_ver_status ? myEntry.expense_share : 0
   return { isPayer: false, amount }
+}
+
+// Derives expense-level Created/Updated timestamps from the shares —
+// earliest creation and latest change across all versions of the expense.
+function getExpenseTimestamps(expense: Expense) {
+  const shares = expense.expense_share
+  if (shares.length === 0) return { created: null, updated: null }
+  let created = shares[0].meta_created_dttm
+  let updated = shares[0].meta_changed_dttm
+  for (const s of shares) {
+    if (new Date(s.meta_created_dttm) < new Date(created)) created = s.meta_created_dttm
+    if (new Date(s.meta_changed_dttm) > new Date(updated)) updated = s.meta_changed_dttm
+  }
+  return { created, updated }
 }
 
 // ─── Sub-components ────────────────────────────────────────────────────────
@@ -163,6 +177,7 @@ function ExpenseCard({ expense, userKey, index, onRefresh, onEdit }: {
   const color = isPayer ? 'green' : 'red'
   const currency = expense.currency_code
   const divisionLabel = expense.division_by_code === 'AMOUNT' ? 'Split by amount' : expense.division_by_code
+  const timestamps = getExpenseTimestamps(expense)
 
   return (
     <div
@@ -222,6 +237,12 @@ function ExpenseCard({ expense, userKey, index, onRefresh, onEdit }: {
           </span>
           <span className="expense-badge currency">{currency}</span>
           <span className="expense-badge currency">{divisionLabel}</span>
+        </div>
+
+        {/* Created / Updated timestamps */}
+        <div className="expense-timestamps-row">
+          <span className="expense-timestamp">Created: {formatDateTime(timestamps.created)}</span>
+          <span className="expense-timestamp">Updated: {formatDateTime(timestamps.updated)}</span>
         </div>
 
         {/* Net amount for current user */}
