@@ -1389,16 +1389,135 @@ button:focus-visible {
   gap: 12px;
 }
 
-/* Dark calendar popup and a visible, clickable picker icon */
-.ce-date-input {
-  color-scheme: dark;
-  min-height: 46px;
+/* Calendar picker (react-day-picker), themed to match the dropdown panels.
+   Two-class selectors so these win regardless of stylesheet order. */
+.ce-row .ce-select,
+.ce-row .ce-date-trigger { min-height: 46px; }
+
+.ce-date-trigger { padding: 12px 14px; }
+.ce-date-trigger.error { border-color: rgba(248,113,113,0.55); }
+.ce-date-value {
+  font-size: 14.5px;
+  color: #e8e5f0;
 }
-.ce-date-input::-webkit-calendar-picker-indicator {
+
+.ce-cal-panel { padding: 10px 12px 12px; }
+
+.ce-cal-panel .rdp-root {
+  --rdp-accent-color: #c9a96e;
+  --rdp-accent-background-color: rgba(201,169,110,0.14);
+  --rdp-day-height: 38px;
+  --rdp-day-width: 38px;
+  --rdp-day_button-height: 36px;
+  --rdp-day_button-width: 36px;
+  --rdp-day_button-border-radius: 10px;
+  --rdp-day_button-border: 1px solid transparent;
+  --rdp-selected-border: 1px solid #c9a96e;
+  --rdp-disabled-opacity: 0.28;
+  --rdp-today-color: #c9a96e;
+  --rdp-nav_button-height: 2rem;
+  --rdp-nav_button-width: 2rem;
+  --rdp-nav-height: 2.25rem;
+  width: max-content;
+  margin: 0 auto;
+  font-family: "Outfit", sans-serif;
+  color: #e8e5f0;
+}
+
+.ce-cal-panel .rdp-caption_label {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #e8e5f0;
+}
+
+.ce-cal-panel .rdp-weekday {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8a8ab0;
+  opacity: 1;
+}
+
+.ce-cal-panel .rdp-button_next,
+.ce-cal-panel .rdp-button_previous {
+  color: #8a8ab0;
+  border-radius: 8px;
   cursor: pointer;
-  opacity: 0.7;
+  transition: color 0.18s ease, background-color 0.18s ease;
 }
-.ce-date-input::-webkit-calendar-picker-indicator:hover { opacity: 1; }
+.ce-cal-panel .rdp-button_next:hover:not(:disabled),
+.ce-cal-panel .rdp-button_previous:hover:not(:disabled) {
+  color: #c9a96e;
+  background: rgba(201,169,110,0.1);
+}
+.ce-cal-panel .rdp-chevron { fill: currentColor; }
+
+.ce-cal-panel .rdp-day_button {
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.ce-cal-panel .rdp-day_button:hover:not(:disabled) {
+  background: rgba(255,255,255,0.07);
+}
+.ce-cal-panel .rdp-day_button:disabled { cursor: not-allowed; }
+.ce-cal-panel .rdp-day_button:focus-visible {
+  outline: 2px solid #c9a96e;
+  outline-offset: 1px;
+}
+
+.ce-cal-panel .rdp-today:not(.rdp-selected) .rdp-day_button {
+  border-color: rgba(201,169,110,0.45);
+}
+
+.ce-cal-panel .rdp-selected {
+  font-size: inherit;
+  font-weight: 700;
+}
+.ce-cal-panel .rdp-selected .rdp-day_button,
+.ce-cal-panel .rdp-selected .rdp-day_button:hover:not(:disabled) {
+  background: #c9a96e;
+  border-color: #c9a96e;
+  color: #07071a;
+}
+
+.ce-cal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,0.055);
+}
+.ce-cal-hint {
+  font-family: "Outfit", sans-serif;
+  font-size: 11px;
+  color: #8a8ab0;
+}
+.ce-cal-today {
+  font-family: "Outfit", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(201,169,110,0.32);
+  background: rgba(201,169,110,0.1);
+  color: #c9a96e;
+  cursor: pointer;
+  transition: background-color 0.18s ease, border-color 0.18s ease;
+}
+.ce-cal-today:hover:not(:disabled) {
+  background: rgba(201,169,110,0.18);
+  border-color: rgba(201,169,110,0.5);
+}
+.ce-cal-today:disabled { opacity: 0.4; cursor: not-allowed; }
+.ce-cal-today:focus-visible {
+  outline: 2px solid #c9a96e;
+  outline-offset: 2px;
+}
 
 .ce-select {
   width: 100%;
