@@ -1,12 +1,16 @@
 import { apiClient } from '../lib/apiClient'
 import type { Expense, CreateExpenseRequest, EditExpenseRequest } from '../types/expense'
 
-export function getActiveExpenses(): Promise<Expense[]> {
-  return apiClient.get<Expense[]>('/expense/get_active')
+// Values the API expects for the order_by query parameter.
+export const ORDER_BY = { EXPENSE_DT: 0, LAST_UPDATED: 1 } as const
+export type ExpenseOrderBy = (typeof ORDER_BY)[keyof typeof ORDER_BY]
+
+export function getActiveExpenses(orderBy: ExpenseOrderBy = ORDER_BY.EXPENSE_DT): Promise<Expense[]> {
+  return apiClient.get<Expense[]>(`/expense/get_active?order_by=${orderBy}`)
 }
 
-export function getAllExpenses(): Promise<Expense[]> {
-  return apiClient.get<Expense[]>('/expense/get_all')
+export function getAllExpenses(orderBy: ExpenseOrderBy = ORDER_BY.EXPENSE_DT): Promise<Expense[]> {
+  return apiClient.get<Expense[]>(`/expense/get_all?order_by=${orderBy}`)
 }
 
 export function createExpense(payload: CreateExpenseRequest): Promise<Expense> {

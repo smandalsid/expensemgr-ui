@@ -5,6 +5,7 @@ import type { DivisionMethod } from '../services/expenseService'
 import { getAllUsers } from '../services/userService'
 import type { UserSummary } from '../services/userService'
 import { ApiError } from '../lib/apiClient'
+import { addMonths, toDateInputValue } from '../lib/format'
 import type { SecondaryShare, Expense } from '../types/expense'
 import type { Currency } from '../types/currency'
 
@@ -456,6 +457,20 @@ export default function CreateExpenseModal({ userKey, currencies, onClose, onSuc
 
   const [desc, setDesc] = useState(editExpense?.expense_desc ?? '')
   const [totalAmount, setTotalAmount] = useState(editExpense ? String(editExpense.total_amount) : '')
+  const [expenseDate, setExpenseDate] = useState(() => editExpense?.expense_dt ?? toDateInputValue(new Date()))
+  // Selectable window is one month either side of today; an edited expense keeps its own date selectable.
+  const dateWindow = useMemo(() => {
+    const now = new Date()
+    const min = toDateInputValue(addMonths(now, -1))
+    const max = toDateInputValue(addMonths(now, 1))
+    const original = editExpense?.expense_dt
+    return {
+      min,
+      max,
+      inputMin: original && original < min ? original : min,
+      inputMax: original && original > max ? original : max,
+    }
+  }, [editExpense])
   const [currencyKey, setCurrencyKey] = useState(() => {
     if (editExpense) {
       const match = currencies.find(c => c.currency_code === editExpense.currency_code)
@@ -586,6 +601,15 @@ export default function CreateExpenseModal({ userKey, currencies, onClose, onSuc
 
     if (!desc.trim()) errs.desc = 'Description is required'
 
+    if (!expenseDate) {
+      errs.expenseDate = 'Select the expense date'
+    } else if (
+      expenseDate !== editExpense?.expense_dt &&
+      (expenseDate < dateWindow.min || expenseDate > dateWindow.max)
+    ) {
+      errs.expenseDate = 'Date must be within a month of today'
+    }
+
     const pk = parseInt(primaryUserKey)
     if (!primaryUserKey || isNaN(pk) || pk <= 0) errs.primaryUserKey = 'Select a primary user'
 
@@ -629,6 +653,7 @@ export default function CreateExpenseModal({ userKey, currencies, onClose, onSuc
           division_by_key: divisionKey,
           total_amount: parseFloat(totalAmount),
           expense_desc: desc.trim(),
+          expense_dt: expenseDate,
           user_expense_secondary_share: secondary,
           expense_key: editExpense.expense_key,
         })
@@ -639,6 +664,7 @@ export default function CreateExpenseModal({ userKey, currencies, onClose, onSuc
           division_by_key: divisionKey,
           total_amount: parseFloat(totalAmount),
           expense_desc: desc.trim(),
+          expense_dt: expenseDate,
           user_expense_secondary_share: secondary,
         })
       }
@@ -727,21 +753,36 @@ export default function CreateExpenseModal({ userKey, currencies, onClose, onSuc
             </div>
           </div>
 
-          {/* Split method */}
-          <div className="field-group">
-            <label className="field-label" htmlFor="ce-division">Split Method</label>
-            <select
-              id="ce-division"
-              className="ce-select"
-              value={divisionKey}
-              onChange={e => setDivisionKey(Number(e.target.value))}
-            >
-              {divisionMethods.map(d => (
-                <option key={d.division_by_key} value={d.division_by_key}>
-                  {d.division_by_code.charAt(0) + d.division_by_code.slice(1).toLowerCase().replace(/_/g, ' ')}
-                </option>
-              ))}
-            </select>
+          {/* Date + Split method */}
+          <div className="ce-row">
+            <div className="field-group" style={{ flex: '1 1 0', minWidth: 0 }}>
+              <label className="field-label" htmlFor="ce-date">Expense Date</label>
+              <input
+                id="ce-date"
+                type="date"
+                className={`auth-input ce-date-input${errors.expenseDate ? ' error' : ''}`}
+                value={expenseDate}
+                min={dateWindow.inputMin}
+                max={dateWindow.inputMax}
+                onChange={e => { setExpenseDate(e.target.value); clearFieldError('expenseDate') }}
+              />
+              {errors.expenseDate && <p className="field-error">{errors.expenseDate}</p>}
+            </div>
+            <div className="field-group" style={{ flex: '1 1 0', minWidth: 0 }}>
+              <label className="field-label" htmlFor="ce-division">Split Method</label>
+              <select
+                id="ce-division"
+                className="ce-select"
+                value={divisionKey}
+                onChange={e => setDivisionKey(Number(e.target.value))}
+              >
+                {divisionMethods.map(d => (
+                  <option key={d.division_by_key} value={d.division_by_key}>
+                    {d.division_by_code.charAt(0) + d.division_by_code.slice(1).toLowerCase().replace(/_/g, ' ')}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* Participants */}

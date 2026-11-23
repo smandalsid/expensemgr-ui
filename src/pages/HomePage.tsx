@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { getActiveExpenses, settleExpense, deleteExpense } from '../services/expenseService'
 import { getCurrencies } from '../services/currencyService'
@@ -6,11 +6,13 @@ import { getAllBalances } from '../services/balanceService'
 import type { Expense, ExpenseShare } from '../types/expense'
 import type { Currency } from '../types/currency'
 import type { UserBalance } from '../types/balance'
-import { formatAmount, initials, avatarStyle, formatDateTime } from '../lib/format'
+import { formatAmount, initials, avatarStyle, formatDateTime, formatDate } from '../lib/format'
 import { getMyFinancials, getExpenseTimestamps, deriveUserName } from '../lib/expenseUtils'
 import CreateExpenseModal from '../components/CreateExpenseModal'
 import ConfirmationBar from '../components/ConfirmationBar'
 import BalanceOverview from '../components/BalanceOverview'
+import ExpenseSortToggle from '../components/ExpenseSortToggle'
+import { useExpenseSort } from '../lib/expenseSort'
 import AppShell from '../components/AppShell'
 import type { AppView } from '../components/AppShell'
 
@@ -212,6 +214,7 @@ function ExpenseCard({ expense, userKey, index, onRefresh, onEdit }: {
 
         {/* Created / Updated timestamps */}
         <div className="expense-timestamps-row">
+          <span className="expense-timestamp">Expense date: {formatDate(expense.expense_dt)}</span>
           <span className="expense-timestamp">Created: {formatDateTime(timestamps.created)}</span>
           <span className="expense-timestamp">Updated: {formatDateTime(timestamps.updated)}</span>
         </div>
@@ -311,15 +314,19 @@ export default function HomePage({ onNavigate }: { onNavigate: (view: AppView) =
   const [balancesLoading, setBalancesLoading] = useState(true)
   const [showCreateExpense, setShowCreateExpense] = useState(false)
   const [editExpense, setEditExpense] = useState<Expense | null>(null)
+  const [orderBy, setOrderBy] = useExpenseSort()
+  // Ignores responses from superseded requests (e.g. rapid sort toggling).
+  const latestRequest = useRef(0)
 
   const fetchExpenses = useCallback(() => {
+    const requestId = ++latestRequest.current
     setExpensesLoading(true)
     setError(null)
-    getActiveExpenses()
-      .then(data => setExpenses(data ?? []))
-      .catch(() => setError('Could not load expenses. Please refresh.'))
-      .finally(() => setExpensesLoading(false))
-  }, [])
+    getActiveExpenses(orderBy)
+      .then(data => { if (requestId === latestRequest.current) setExpenses(data ?? []) })
+      .catch(() => { if (requestId === latestRequest.current) setError('Could not load expenses. Please refresh.') })
+      .finally(() => { if (requestId === latestRequest.current) setExpensesLoading(false) })
+  }, [orderBy])
 
   const fetchBalances = useCallback(() => {
     setBalancesLoading(true)
@@ -336,15 +343,19 @@ export default function HomePage({ onNavigate }: { onNavigate: (view: AppView) =
     fetchBalances()
   }, [fetchExpenses, fetchBalances])
 
-  // Fetch expenses, currencies and balances in parallel once on mount
+  // Expenses refetch whenever the sort changes; balances and currencies are sort-independent.
   useEffect(() => {
     fetchExpenses()
+  }, [fetchExpenses])
+
+  useEffect(() => {
     fetchBalances()
     getCurrencies().then(data => setCurrencies(data ?? [])).catch(() => {})
-  }, [fetchExpenses, fetchBalances])
+  }, [fetchBalances])
 
-  // Show skeletons only until expenses are ready; user profile enriches the UI when it arrives
-  const loading = expensesLoading || (userLoading && myKey === null)
+  // Skeletons only on the first load; later refetches keep the list on screen.
+  const loading = (expensesLoading && expenses.length === 0) || (userLoading && myKey === null)
+  const isRefreshing = expensesLoading && expenses.length > 0
 
   // Determine the primary currency from expenses (fallback to INR)
   const primaryCurrency = expenses[0]?.currency_code ?? 'INR'
@@ -447,9 +458,12 @@ export default function HomePage({ onNavigate }: { onNavigate: (view: AppView) =
         )}
 
         {/* ── Expense list ── */}
-        <p className="home-section-title">
-          Active Expenses {!loading && `(${expenses.length})`}
-        </p>
+        <div className="list-head">
+          <p className="home-section-title">
+            Active Expenses {!loading && `(${expenses.length})`}
+          </p>
+          <ExpenseSortToggle value={orderBy} onChange={setOrderBy} />
+        </div>
 
         {loading && (
           <div>
@@ -469,7 +483,7 @@ export default function HomePage({ onNavigate }: { onNavigate: (view: AppView) =
         )}
 
         {!loading && !error && (
-          <div className="expense-list">
+          <div className={`expense-list${isRefreshing ? ' is-refreshing' : ''}`} aria-busy={isRefreshing}>
             {expenses.length === 0 ? (
               <div className="expense-card" style={{ animationDelay: '0s' }}>
                 <div className="expense-card-accent" style={{ background: 'rgba(255,255,255,0.06)' }} />
