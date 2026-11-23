@@ -1389,6 +1389,17 @@ button:focus-visible {
   gap: 12px;
 }
 
+/* Dark calendar popup and a visible, clickable picker icon */
+.ce-date-input {
+  color-scheme: dark;
+  min-height: 46px;
+}
+.ce-date-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.7;
+}
+.ce-date-input::-webkit-calendar-picker-indicator:hover { opacity: 1; }
+
 .ce-select {
   width: 100%;
   background: rgba(255,255,255,0.038);
@@ -2020,6 +2031,37 @@ button:focus-visible {
 }
 
 /* ─── History page ────────────────────────────────────────────────── */
+.list-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  margin-bottom: 14px;
+}
+.list-head .home-section-title { margin: 0; }
+
+.sort-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.sort-toggle-label {
+  font-family: "Outfit", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #8a8ab0;
+}
+
+.hist-sortrow { margin-bottom: 12px; }
+
+.is-refreshing {
+  opacity: 0.55;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+}
 .hist-subtitle {
   font-family: "Outfit", sans-serif;
   font-size: 14px;

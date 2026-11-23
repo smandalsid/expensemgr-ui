@@ -44,3 +44,31 @@ export function formatDateTime(dttm: string | null | undefined) {
     hour: 'numeric', minute: '2-digit', hour12: true,
   })
 }
+
+// "YYYY-MM-DD" calendar dates have no timezone; building them from local parts
+// avoids new Date("YYYY-MM-DD") (UTC) showing the previous day west of UTC.
+export function parseDateOnly(date: string | null | undefined): Date | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(date ?? '')
+  return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : null
+}
+
+export function formatDate(date: string | null | undefined) {
+  const d = parseDateOnly(date)
+  if (!d) return '—'
+  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+// Local-time "YYYY-MM-DD", the value format of <input type="date">.
+export function toDateInputValue(date: Date) {
+  const mm = String(date.getMonth() + 1).padStart(2, '0')
+  const dd = String(date.getDate()).padStart(2, '0')
+  return `${date.getFullYear()}-${mm}-${dd}`
+}
+
+// Clamps to the target month's last day (31 Mar - 1 month = 28/29 Feb, not 3 Mar).
+export function addMonths(date: Date, months: number) {
+  const result = new Date(date.getFullYear(), date.getMonth() + months, 1)
+  const lastDay = new Date(result.getFullYear(), result.getMonth() + 1, 0).getDate()
+  result.setDate(Math.min(date.getDate(), lastDay))
+  return result
+}

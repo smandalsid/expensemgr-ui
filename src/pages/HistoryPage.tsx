@@ -1,8 +1,11 @@
 import { memo, useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { getAllExpenses } from '../services/expenseService'
+import { getAllExpenses, ORDER_BY } from '../services/expenseService'
+import type { ExpenseOrderBy } from '../services/expenseService'
+import { useExpenseSort } from '../lib/expenseSort'
+import ExpenseSortToggle from '../components/ExpenseSortToggle'
 import { getMyFinancials, getExpenseTimestamps, deriveUserName } from '../lib/expenseUtils'
-import { avatarStyle, formatAmount, formatDateTime, initials, parseBackendDate } from '../lib/format'
+import { avatarStyle, formatAmount, formatDate, formatDateTime, initials, parseBackendDate, parseDateOnly } from '../lib/format'
 import AppShell from '../components/AppShell'
 import type { AppView } from '../components/AppShell'
 import type { Expense } from '../types/expense'
@@ -14,6 +17,10 @@ interface HistoryEntry {
   created: string | null
   updated: string | null
   createdMs: number
+  dateMs: number
+  updatedMs: number
+  /** Timestamp the list is currently sorted and grouped by. */
+  sortMs: number
   isPayer: boolean
   amount: number
   settled: boolean
@@ -34,13 +41,14 @@ function monthLabel(ms: number) {
 
 // ─── Row ───────────────────────────────────────────────────────────────────
 
-const HistoryRow = memo(function HistoryRow({ entry, userKey, expanded, onToggle }: {
+const HistoryRow = memo(function HistoryRow({ entry, userKey, expanded, onToggle, dateTitle }: {
   entry: HistoryEntry
   userKey: number
   expanded: boolean
   onToggle: (expenseKey: number) => void
+  dateTitle: string
 }) {
-  const { expense, isPayer, amount, settled, createdMs } = entry
+  const { expense, isPayer, amount, settled, sortMs } = entry
   const currency = expense.currency_code
   const tone = settled ? 'settled' : isPayer ? 'green' : 'red'
   const panelId = `hist-panel-${expense.expense_key}`
@@ -55,8 +63,8 @@ const HistoryRow = memo(function HistoryRow({ entry, userKey, expanded, onToggle
         aria-controls={panelId}
         onClick={() => onToggle(expense.expense_key)}
       >
-        <span className="hist-row-date">
-          {createdMs > 0 ? DAY_FORMAT.format(new Date(createdMs)) : '—'}
+        <span className="hist-row-date" title={dateTitle}>
+          {sortMs > 0 ? DAY_FORMAT.format(new Date(sortMs)) : '—'}
         </span>
         <span className="hist-row-main">
           <span className="hist-row-desc">{expense.expense_desc}</span>
@@ -86,6 +94,7 @@ const HistoryRow = memo(function HistoryRow({ entry, userKey, expanded, onToggle
             <span className="expense-badge currency">{divisionLabel}</span>
           </div>
           <div className="expense-timestamps-row">
+            <span className="expense-timestamp">Expense date: {formatDate(expense.expense_dt)}</span>
             <span className="expense-timestamp">Created: {formatDateTime(entry.created)}</span>
             <span className="expense-timestamp">Updated: {formatDateTime(entry.updated)}</span>
           </div>
@@ -125,6 +134,7 @@ export default function HistoryPage({ onNavigate }: { onNavigate: (view: AppView
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
+  const [orderBy, setOrderBy] = useExpenseSort()
   const [filter, setFilter] = useState<StatusFilter>('all')
   const [query, setQuery] = useState('')
   const [expandedKeys, setExpandedKeys] = useState<ReadonlySet<number>>(() => new Set())
@@ -137,14 +147,19 @@ export default function HistoryPage({ onNavigate }: { onNavigate: (view: AppView
     setReloadKey(k => k + 1)
   }, [])
 
+  const handleSortChange = useCallback((next: ExpenseOrderBy) => {
+    setOrderBy(next)
+    setLoading(true)
+  }, [setOrderBy])
+
   useEffect(() => {
     let cancelled = false
-    getAllExpenses()
+    getAllExpenses(orderBy)
       .then(data => { if (!cancelled) setExpenses(data ?? []) })
       .catch(() => { if (!cancelled) setError('Could not load your expense history.') })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
-  }, [reloadKey])
+  }, [reloadKey, orderBy])
 
   const entries = useMemo<HistoryEntry[]>(() => {
     if (myKey === null) return []
@@ -152,18 +167,28 @@ export default function HistoryPage({ onNavigate }: { onNavigate: (view: AppView
       .map(expense => {
         const { created, updated } = getExpenseTimestamps(expense)
         const { isPayer, amount } = getMyFinancials(expense, myKey)
+        const createdMs = parseBackendDate(created)?.getTime() ?? 0
+        const updatedMs = parseBackendDate(updated)?.getTime() ?? 0
+        const dateMs = parseDateOnly(expense.expense_dt)?.getTime() ?? 0
         return {
           expense,
           created,
           updated,
-          createdMs: parseBackendDate(created)?.getTime() ?? 0,
+          createdMs,
+          dateMs,
+          updatedMs,
+          sortMs: orderBy === ORDER_BY.LAST_UPDATED ? updatedMs : dateMs,
           isPayer,
           amount,
           settled: amount === 0,
         }
       })
-      .sort((a, b) => b.createdMs - a.createdMs)
-  }, [expenses, myKey])
+      .sort((a, b) =>
+        orderBy === ORDER_BY.LAST_UPDATED
+          ? b.updatedMs - a.updatedMs || b.dateMs - a.dateMs
+          : b.dateMs - a.dateMs || b.createdMs - a.createdMs,
+      )
+  }, [expenses, myKey, orderBy])
 
   const counts = useMemo(() => {
     let settled = 0
@@ -178,7 +203,7 @@ export default function HistoryPage({ onNavigate }: { onNavigate: (view: AppView
       if (filter === 'pending' && entry.settled) continue
       if (filter === 'settled' && !entry.settled) continue
       if (needle && !entry.expense.expense_desc.toLowerCase().includes(needle)) continue
-      const label = monthLabel(entry.createdMs)
+      const label = monthLabel(entry.sortMs)
       const last = result[result.length - 1]
       if (last && last.label === label) last.items.push(entry)
       else result.push({ label, items: [entry] })
@@ -197,7 +222,9 @@ export default function HistoryPage({ onNavigate }: { onNavigate: (view: AppView
   }, [])
 
   const fallbackName = useMemo(() => deriveUserName(expenses, myKey), [expenses, myKey])
-  const showSkeleton = loading || (myKey === null && !error)
+  const showSkeleton = (loading && expenses.length === 0) || (myKey === null && !error)
+  const isRefreshing = loading && expenses.length > 0
+  const dateTitle = orderBy === ORDER_BY.LAST_UPDATED ? 'Last updated' : 'Expense date'
   const isFiltering = filter !== 'all' || query.trim() !== ''
 
   return (
@@ -217,6 +244,12 @@ export default function HistoryPage({ onNavigate }: { onNavigate: (view: AppView
             Every expense you have paid for or shared in, settled or not.
           </p>
         </div>
+
+        {!showSkeleton && !error && entries.length > 0 && (
+          <div className="hist-sortrow">
+            <ExpenseSortToggle value={orderBy} onChange={handleSortChange} />
+          </div>
+        )}
 
         {!showSkeleton && !error && entries.length > 0 && (
           <div className="hist-toolbar">
@@ -290,7 +323,7 @@ export default function HistoryPage({ onNavigate }: { onNavigate: (view: AppView
         )}
 
         {!showSkeleton && !error && myKey !== null && groups.map(group => (
-          <section key={group.label} className="hist-group" aria-label={group.label}>
+          <section key={group.label} className={`hist-group${isRefreshing ? ' is-refreshing' : ''}`} aria-label={group.label} aria-busy={isRefreshing}>
             <p className="home-section-title hist-group-title">
               {group.label} <span>({group.items.length})</span>
             </p>
@@ -301,6 +334,7 @@ export default function HistoryPage({ onNavigate }: { onNavigate: (view: AppView
                   entry={entry}
                   userKey={myKey}
                   expanded={expandedKeys.has(entry.expense.expense_key)}
+                  dateTitle={dateTitle}
                   onToggle={toggleExpanded}
                 />
               ))}

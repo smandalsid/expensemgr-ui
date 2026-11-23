@@ -11,6 +11,7 @@ export interface ExpenseShare {
 
 export interface Expense {
   expense_key: number
+  expense_dt: string
   primary_user_key: number
   primary_user_name: string
   expense_desc: string
@@ -32,6 +33,7 @@ export interface CreateExpenseRequest {
   division_by_key: number
   total_amount: number
   expense_desc: string
+  expense_dt?: string | null
   user_expense_secondary_share: SecondaryShare[]
 }
 
@@ -41,6 +43,7 @@ export interface EditExpenseRequest {
   division_by_key: number
   total_amount: number
   expense_desc: string
+  expense_dt?: string | null
   user_expense_secondary_share: SecondaryShare[]
   expense_key: number
 }
