@@ -29,11 +29,16 @@ export function avatarStyle(key: number) {
 
 // Backend timestamps like "2026-08-08T06:48:56.700917" are in UTC but omit the
 // "Z" suffix, so the JS Date parser would otherwise interpret them as local time.
-export function formatDateTime(dttm: string | null | undefined) {
-  if (!dttm) return '—'
+export function parseBackendDate(dttm: string | null | undefined): Date | null {
+  if (!dttm) return null
   const utcDttm = /[zZ]|[+-]\d{2}:?\d{2}$/.test(dttm) ? dttm : `${dttm}Z`
   const date = new Date(utcDttm)
-  if (isNaN(date.getTime())) return '—'
+  return isNaN(date.getTime()) ? null : date
+}
+
+export function formatDateTime(dttm: string | null | undefined) {
+  const date = parseBackendDate(dttm)
+  if (!date) return '—'
   return date.toLocaleString('en-IN', {
     day: 'numeric', month: 'short', year: 'numeric',
     hour: 'numeric', minute: '2-digit', hour12: true,

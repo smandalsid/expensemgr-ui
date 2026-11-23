@@ -448,6 +448,9 @@ interface ParticipantRow {
   expenseVerKey?: number
 }
 
+// New expenses pre-fill every user only when the user list is this small.
+const MAX_SEEDED_USERS = 4
+
 export default function CreateExpenseModal({ userKey, currencies, onClose, onSuccess, editExpense }: CreateExpenseModalProps) {
   const isEditing = Boolean(editExpense)
 
@@ -505,9 +508,25 @@ export default function CreateExpenseModal({ userKey, currencies, onClose, onSuc
 
   useEffect(() => {
     getAllUsers()
-      .then(setAllUsers)
+      .then(users => {
+        setAllUsers(users)
+        if (isEditing || users.length === 0 || users.length > MAX_SEEDED_USERS) return
+
+        // Current user first, matching the default single row.
+        const ordered = [...users].sort(
+          (a, b) => Number(b.user_key === userKey) - Number(a.user_key === userKey),
+        )
+        // Only seed while the default row is untouched.
+        setParticipants(prev => {
+          const untouched = prev.length === 1 && prev[0].userKey === String(userKey) && prev[0].share === ''
+          return untouched
+            ? ordered.map((u, i) => ({ id: i + 1, userKey: String(u.user_key), share: '' }))
+            : prev
+        })
+        setNextId(n => Math.max(n, users.length + 1))
+      })
       .catch(() => { /* silently fail — users list stays empty */ })
-  }, [])
+  }, [isEditing, userKey])
 
   useEffect(() => {
     getAllDivisionMethods()
