@@ -6,6 +6,8 @@ import { getAllUsers } from '../services/userService'
 import type { UserSummary } from '../services/userService'
 import { ApiError } from '../lib/apiClient'
 import { addMonths, toDateInputValue } from '../lib/format'
+import { computeDropdownPanelStyle } from '../lib/dropdownPosition'
+import DatePicker from './DatePicker'
 import type { SecondaryShare, Expense } from '../types/expense'
 import type { Currency } from '../types/currency'
 
@@ -24,48 +26,6 @@ const CloseIcon = () => (
     <line x1="6" y1="6" x2="18" y2="18" />
   </svg>
 )
-
-// Positions a portal-rendered dropdown panel under its trigger, widening it
-// on narrow screens and clamping it so it never spills past the viewport edge.
-const MOBILE_BREAKPOINT = 640
-
-function computeDropdownPanelStyle(trigger: HTMLElement): React.CSSProperties {
-  const viewportWidth = window.innerWidth
-  const margin = 8
-
-  // On phones, anchoring the panel under the trigger falls apart once the
-  // on-screen keyboard opens — the layout/visual viewport shift mobile
-  // browsers apply made the panel jump to a seemingly random spot. Instead,
-  // dock it as a fixed sheet vertically centered in the visible viewport
-  // (biased slightly toward the trigger), which stays put regardless of
-  // page scroll or the keyboard's presence.
-  if (viewportWidth <= MOBILE_BREAKPOINT) {
-    const viewportHeight = window.visualViewport?.height ?? window.innerHeight
-    const maxHeight = Math.min(viewportHeight - margin * 2, 380)
-    const rect = trigger.getBoundingClientRect()
-    const triggerCenter = rect.top + rect.height / 2
-    const idealTop = triggerCenter - maxHeight / 2
-    const top = Math.min(
-      Math.max(idealTop, margin),
-      viewportHeight - maxHeight - margin
-    )
-    return {
-      position: 'fixed',
-      top,
-      left: margin,
-      right: margin,
-      width: 'auto',
-      maxHeight,
-      overflowY: 'auto',
-      zIndex: 9999,
-    }
-  }
-
-  const rect = trigger.getBoundingClientRect()
-  const width = Math.min(Math.max(rect.width, 240), viewportWidth - margin * 2)
-  const left = Math.min(Math.max(rect.left, margin), viewportWidth - width - margin)
-  return { position: 'fixed', top: rect.bottom + 4, left, width, zIndex: 9999 }
-}
 
 // ── Searchable currency picker ─────────────────────────────────────
 function CurrencySelect({ currencies, value, onChange }: {
@@ -757,14 +717,13 @@ export default function CreateExpenseModal({ userKey, currencies, onClose, onSuc
           <div className="ce-row">
             <div className="field-group" style={{ flex: '1 1 0', minWidth: 0 }}>
               <label className="field-label" htmlFor="ce-date">Expense Date</label>
-              <input
+              <DatePicker
                 id="ce-date"
-                type="date"
-                className={`auth-input ce-date-input${errors.expenseDate ? ' error' : ''}`}
                 value={expenseDate}
                 min={dateWindow.inputMin}
                 max={dateWindow.inputMax}
-                onChange={e => { setExpenseDate(e.target.value); clearFieldError('expenseDate') }}
+                invalid={Boolean(errors.expenseDate)}
+                onChange={v => { setExpenseDate(v); clearFieldError('expenseDate') }}
               />
               {errors.expenseDate && <p className="field-error">{errors.expenseDate}</p>}
             </div>
