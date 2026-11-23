@@ -1919,3 +1919,357 @@ button:focus-visible {
   background: rgba(248, 113, 113, 0.25);
   box-shadow: 0 0 12px rgba(248, 113, 113, 0.2);
 }
+
+/* ─── Nav sign-out (moved from inline styles) ─────────────────────── */
+.home-nav-signout {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  color: #6b6b94;
+  font-family: "Outfit", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+  white-space: nowrap;
+  transition: color 0.2s, border-color 0.2s;
+}
+.home-nav-signout:hover {
+  color: #f87171;
+  border-color: rgba(248,113,113,0.28);
+}
+
+/* ─── Primary tabs (Home / History) ───────────────────────────────── */
+.app-tabs {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 62px;
+  display: grid;
+  grid-template-columns: repeat(2, 112px);
+  z-index: 101;
+}
+
+.app-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  font-family: "Outfit", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #8a8ab0;
+  cursor: pointer;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+.app-tab:hover { color: #e8e5f0; }
+.app-tab.active { color: #c9a96e; }
+.app-tab:focus-visible,
+.hist-chip:focus-visible,
+.hist-row-head:focus-visible,
+.hist-retry-btn:focus-visible,
+.home-nav-signout:focus-visible {
+  outline: 2px solid #c9a96e;
+  outline-offset: -2px;
+}
+
+.app-tabs-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 112px;
+  height: 2px;
+  background: linear-gradient(90deg, #c9a96e, #8a6534);
+  border-radius: 2px 2px 0 0;
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.app-tabs[data-active="history"] .app-tabs-indicator {
+  transform: translateX(100%);
+}
+
+@media (max-width: 899px) {
+  .home-nav-fullname { display: none; }
+}
+
+/* Bottom tab bar on small screens */
+@media (max-width: 767px) {
+  .app-tabs {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    transform: none;
+    height: calc(60px + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+    grid-template-columns: 1fr 1fr;
+    background: rgba(9, 9, 29, 0.96);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255,255,255,0.055);
+  }
+  .app-tab {
+    flex-direction: column;
+    gap: 3px;
+    font-size: 11px;
+  }
+  .app-tabs-indicator {
+    top: 0;
+    bottom: auto;
+    width: 50%;
+    border-radius: 0 0 2px 2px;
+  }
+  .home-content {
+    padding-bottom: calc(6rem + env(safe-area-inset-bottom));
+  }
+}
+
+/* ─── History page ────────────────────────────────────────────────── */
+.hist-subtitle {
+  font-family: "Outfit", sans-serif;
+  font-size: 14px;
+  color: #8a8ab0;
+  margin: 0;
+}
+
+.hist-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 1.8rem;
+}
+
+.hist-filters {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.hist-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: "Outfit", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 13px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+  color: #8a8ab0;
+  cursor: pointer;
+  transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+.hist-chip:hover {
+  color: #e8e5f0;
+  border-color: rgba(255,255,255,0.16);
+}
+.hist-chip.active {
+  background: rgba(201,169,110,0.12);
+  border-color: rgba(201,169,110,0.32);
+  color: #c9a96e;
+}
+.hist-chip-count {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10.5px;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.hist-search {
+  position: relative;
+  flex: 1 1 220px;
+  max-width: 300px;
+  min-width: 180px;
+}
+.hist-search svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6b6b94;
+  pointer-events: none;
+}
+.hist-search input {
+  width: 100%;
+  font-family: "Outfit", sans-serif;
+  font-size: 13px;
+  color: #e8e5f0;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 9px 12px 9px 34px;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.hist-search input::placeholder { color: #6b6b94; }
+.hist-search input:focus {
+  outline: none;
+  border-color: rgba(201,169,110,0.5);
+  box-shadow: 0 0 0 3px rgba(201,169,110,0.12);
+}
+
+.hist-group { margin-bottom: 2rem; }
+.hist-group-title span {
+  font-family: "IBM Plex Mono", monospace;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.hist-row {
+  background: rgba(255,255,255,0.022);
+  border: 1px solid rgba(255,255,255,0.055);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: inset 3px 0 0 rgba(255,255,255,0.12);
+  content-visibility: auto;
+  contain-intrinsic-size: auto 74px;
+  transition: background-color 0.18s ease, border-color 0.18s ease;
+}
+.hist-row.green { box-shadow: inset 3px 0 0 #4ade80; }
+.hist-row.red   { box-shadow: inset 3px 0 0 #f87171; }
+.hist-row:hover,
+.hist-row.open {
+  background: rgba(255,255,255,0.036);
+  border-color: rgba(255,255,255,0.09);
+}
+
+.hist-row-head {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto 16px;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px 16px 20px;
+  background: none;
+  border: none;
+  text-align: left;
+  color: inherit;
+  font-family: "Outfit", sans-serif;
+  cursor: pointer;
+}
+
+.hist-row-date {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  color: #8a8ab0;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.hist-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.hist-row-desc {
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: #e8e5f0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hist-row-sub {
+  font-size: 12px;
+  color: #8a8ab0;
+}
+
+.hist-row-figures {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+.hist-row-total {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #e8e5f0;
+  white-space: nowrap;
+}
+
+.hist-pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.hist-pill.green   { color: #4ade80; background: rgba(74,222,128,0.08); border: 1px solid rgba(74,222,128,0.16); }
+.hist-pill.red     { color: #f87171; background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.16); }
+.hist-pill.settled { color: #8a8ab0; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
+
+.hist-chevron {
+  color: #6b6b94;
+  transition: transform 0.2s ease;
+}
+.hist-row.open .hist-chevron { transform: rotate(180deg); }
+
+.hist-detail {
+  padding: 0 20px 18px 86px;
+  animation: fade-in 0.2s ease;
+}
+
+.hist-message {
+  text-align: center;
+  padding: 4rem 1rem;
+  font-family: "Outfit", sans-serif;
+  font-size: 14px;
+  border: 1px dashed rgba(255,255,255,0.08);
+  border-radius: 16px;
+}
+.hist-message-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #e8e5f0;
+  margin: 0 0 6px;
+}
+.hist-message-desc {
+  color: #8a8ab0;
+  margin: 0 0 16px;
+}
+
+.hist-retry-btn {
+  font-family: "Outfit", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(201,169,110,0.32);
+  background: rgba(201,169,110,0.1);
+  color: #c9a96e;
+  cursor: pointer;
+  transition: background-color 0.18s ease, border-color 0.18s ease;
+}
+.hist-retry-btn:hover {
+  background: rgba(201,169,110,0.18);
+  border-color: rgba(201,169,110,0.5);
+}
+
+@media (max-width: 599px) {
+  .hist-row-head {
+    grid-template-columns: minmax(0, 1fr) auto 16px;
+    gap: 6px 12px;
+    padding: 14px 14px 14px 18px;
+  }
+  .hist-row-date { grid-column: 1 / -1; }
+  .hist-detail { padding: 0 18px 16px; }
+  .hist-search { max-width: none; flex-basis: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-content,
+  .hist-detail { animation: none; }
+  .app-tab,
+  .app-tabs-indicator,
+  .hist-row,
+  .hist-chip,
+  .hist-chevron { transition: none; }
+}

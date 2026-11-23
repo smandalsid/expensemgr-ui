@@ -1,10 +1,16 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import HeroPanel from './components/HeroPanel'
 import AuthPanel from './components/AuthPanel'
 import HomePage from './pages/HomePage'
+import HistoryPage from './pages/HistoryPage'
+import type { AppView } from './components/AppShell'
 import { AuthProvider, useAuth } from './context/AuthContext'
 
 export type AuthMode = 'login' | 'signup'
+
+function viewFromHash(): AppView {
+  return window.location.hash === '#/history' ? 'history' : 'home'
+}
 
 function FullScreenLoader() {
   return (
@@ -32,9 +38,25 @@ function FullScreenLoader() {
 function AppRoutes() {
   const { isAuthenticated, userLoading } = useAuth()
   const [mode, setMode] = useState<AuthMode>('login')
+  const [view, setView] = useState<AppView>(viewFromHash)
+
+  // Hash keeps the active tab across refresh and makes the browser back button switch tabs.
+  useEffect(() => {
+    const onHashChange = () => setView(viewFromHash())
+    window.addEventListener('hashchange', onHashChange)
+    return () => window.removeEventListener('hashchange', onHashChange)
+  }, [])
+
+  const navigate = useCallback((next: AppView) => {
+    window.location.hash = next === 'history' ? '/history' : '/'
+  }, [])
 
   if (userLoading) return <FullScreenLoader />
-  if (isAuthenticated) return <HomePage />
+  if (isAuthenticated) {
+    return view === 'history'
+      ? <HistoryPage onNavigate={navigate} />
+      : <HomePage onNavigate={navigate} />
+  }
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', width: '100%', overflow: 'hidden' }}>

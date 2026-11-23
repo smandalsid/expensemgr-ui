@@ -5,6 +5,10 @@ export function getActiveExpenses(): Promise<Expense[]> {
   return apiClient.get<Expense[]>('/expense/get_active')
 }
 
+export function getAllExpenses(): Promise<Expense[]> {
+  return apiClient.get<Expense[]>('/expense/get_all')
+}
+
 export function createExpense(payload: CreateExpenseRequest): Promise<Expense> {
   return apiClient.post<Expense>('/expense/create', payload as unknown as Record<string, unknown>)
 }
